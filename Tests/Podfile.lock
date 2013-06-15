@@ -1,0 +1,25 @@
+PODS:
+  - Expecta (0.2.1)
+  - OCMock (2.1.1)
+  - SLObjectiveCRuntimeAdditions (1.0.0):
+    - SLObjectiveCRuntimeAdditions/no-arc
+  - SLObjectiveCRuntimeAdditions/no-arc (1.0.0)
+  - SLRemoteObject (1.0.0):
+    - SLObjectiveCRuntimeAdditions (= 1.0.0)
+
+DEPENDENCIES:
+  - Expecta (= 0.2.1)
+  - OCMock (= 2.1.1)
+  - SLRemoteObject (from `..`)
+
+EXTERNAL SOURCES:
+  SLRemoteObject:
+    :path: ..
+
+SPEC CHECKSUMS:
+  Expecta: d46fb1bd78c90a83da0158b9b1e108de106e369f
+  OCMock: 79212e5e328378af5cfd6edb5feacfd6c49cd8a3
+  SLObjectiveCRuntimeAdditions: e920ee6a2ed989a8ba820f5afe1307ad9f5e45b6
+  SLRemoteObject: d52817e1a6ad88c779f66a3481416e5bd6c4b403
+
+COCOAPODS: 0.20.2
