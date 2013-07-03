@@ -35,6 +35,7 @@
 #import "_SLNil.h"
 #import "SLRemoteObject.h"
 #import "_SLIncompatibleResponse.h"
+#import <objc/runtime.h>
 
 void SLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, CFDataRef address, const void *data, void *info);
 
