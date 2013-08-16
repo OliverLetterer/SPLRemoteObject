@@ -32,6 +32,16 @@
 OSStatus _SLRemoteObjectConnectionSSLReadFunction(SSLConnectionRef connection, void *data, size_t *dataLength);
 OSStatus _SLRemoteObjectConnectionSSLWriteFunction(SSLConnectionRef connection, const void *data, size_t *dataLength);
 
+static BOOL streamIsHealthyAndOpen(NSStream *stream)
+{
+    NSStreamStatus streamStatus = stream.streamStatus;
+    
+    if (streamStatus == NSStreamStatusNotOpen || streamStatus == NSStreamStatusClosed || streamStatus == NSStreamStatusError) {
+        return NO;
+    } else {
+        return YES;
+    }
+}
 
 
 @interface _SLRemoteObjectConnection () <NSStreamDelegate> {
@@ -109,7 +119,7 @@ OSStatus _SLRemoteObjectConnectionSSLWriteFunction(SSLConnectionRef connection, 
 
 #pragma mark - Initialization
 
-- (id)init 
+- (id)init
 {
     if (self = [super init]) {
         _incomingDataBuffer = [NSMutableData dataWithCapacity:1024];
@@ -339,7 +349,7 @@ OSStatus _SLRemoteObjectConnectionSSLWriteFunction(SSLConnectionRef connection, 
 
 - (size_t)_readDataFromReadStream:(void *)data length:(size_t)length
 {
-    if (!self.isInputStreamOpen || !self.inputStream.hasBytesAvailable) {
+    if (!self.isInputStreamOpen || !self.inputStream.hasBytesAvailable || !streamIsHealthyAndOpen(self.inputStream)) {
         return 0;
     }
     
@@ -356,11 +366,11 @@ OSStatus _SLRemoteObjectConnectionSSLWriteFunction(SSLConnectionRef connection, 
 
 - (size_t)_writeDataToWriteStream:(const void *)data length:(size_t)length
 {
-    if (!self.isOutputStreamOpen || !_outputStream.hasSpaceAvailable) {
+    if (!self.isOutputStreamOpen || !self.outputStream.hasSpaceAvailable || !streamIsHealthyAndOpen(self.outputStream)) {
         return 0;
     }
     
-    NSInteger writtenBytes = [_outputStream write:data maxLength:length];
+    NSInteger writtenBytes = [self.outputStream write:data maxLength:length];
     
     if (writtenBytes == -1) {
         [self disconnect];
