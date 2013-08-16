@@ -355,7 +355,7 @@ static BOOL streamIsHealthyAndOpen(NSStream *stream)
     
     NSInteger bytesRead = [self.inputStream read:data maxLength:length];
     
-    if (length <= 0) {
+    if (length <= 0 || !streamIsHealthyAndOpen(self.inputStream)) {
         [self disconnect];
         [_delegate remoteObjectConnectionConnectionEnded:self];
         return 0;
@@ -372,7 +372,7 @@ static BOOL streamIsHealthyAndOpen(NSStream *stream)
     
     NSInteger writtenBytes = [self.outputStream write:data maxLength:length];
     
-    if (writtenBytes == -1) {
+    if (writtenBytes == -1 || !streamIsHealthyAndOpen(self.outputStream)) {
         [self disconnect];
         [_delegate remoteObjectConnectionConnectionEnded:self];
         return 0;
