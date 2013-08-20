@@ -272,22 +272,6 @@ void SLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBac
                                                                                                                                    forProtocol:_protocol];
             NSInvocation *asynchronInvocation __attribute__((objc_precise_lifetime)) = [invocation asynchronInvocationForProtocol:_protocol];
             
-            void(^cancelRequest)(void) = ^{
-                NSData *responseData = responseData = [NSKeyedArchiver archivedDataWithRootObject:[[_SLIncompatibleResponse alloc] init]];
-                
-                if (_encryptionType & SLRemoteObjectEncryptionSymmetric) {
-                    responseData = _encryptionBlock(responseData, _symmetricKey);
-                }
-                
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    [connection sendDataPackage:responseData];
-                });
-            };
-            
-            if (!invocation) {
-                cancelRequest();
-            }
-            
             if (asynchronInvocation && [_target respondsToSelector:asynchronInvocation.selector]) {
                 if (strcmp(@encode(void), invocation.methodSignature.methodReturnType) == 0) {
                     void(^completionBlock)(NSError *error) = ^(NSError *error) {
@@ -331,7 +315,7 @@ void SLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBac
                 dispatch_sync(dispatch_get_main_queue(), ^{
                     [asynchronInvocation invokeWithTarget:_target];
                 });
-            } else if ([_target respondsToSelector:invocation.selector]) {
+            } else if (invocation && [_target respondsToSelector:invocation.selector]) {
                 dispatch_sync(dispatch_get_main_queue(), ^{
                     [invocation invokeWithTarget:_target];
                     [invocation retainArguments];
@@ -367,6 +351,16 @@ void SLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBac
                         [connection disconnect];
                     });
                 }
+            } else {
+                NSData *responseData = responseData = [NSKeyedArchiver archivedDataWithRootObject:[[_SLIncompatibleResponse alloc] init]];
+                
+                if (_encryptionType & SLRemoteObjectEncryptionSymmetric) {
+                    responseData = _encryptionBlock(responseData, _symmetricKey);
+                }
+                
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [connection sendDataPackage:responseData];
+                });
             }
         } @catch (NSException *exception) {
             NSLog(@"%@", exception.reason);
