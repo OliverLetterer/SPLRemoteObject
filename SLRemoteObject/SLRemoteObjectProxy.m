@@ -272,7 +272,7 @@ void SLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBac
                                                                                                                                    forProtocol:_protocol];
             NSInvocation *asynchronInvocation __attribute__((objc_precise_lifetime)) = [invocation asynchronInvocationForProtocol:_protocol];
             
-            if (asynchronInvocation && [_target respondsToSelector:asynchronInvocation.selector]) {
+            if (self.triesToInvokeAsynchronMethodImplementation && asynchronInvocation && [_target respondsToSelector:asynchronInvocation.selector]) {
                 if (strcmp(@encode(void), invocation.methodSignature.methodReturnType) == 0) {
                     void(^completionBlock)(NSError *error) = ^(NSError *error) {
                         NSAssert([NSThread currentThread].isMainThread, @"completionBlock must be called on the main thread");
