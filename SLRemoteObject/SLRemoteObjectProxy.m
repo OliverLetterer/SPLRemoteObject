@@ -257,63 +257,76 @@ void SLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBac
     });
 }
 
-- (void)remoteObjectConnection:(_SLRemoteObjectConnection *)connection didReceiveDataPackage:(NSData *)dataPackage
+- (void)remoteObjectConnection:(_SLRemoteObjectConnection *)connection didReceiveDataPackage:(NSData *)receivedDataPackage
 {
-    @try {
-        if (_encryptionType & SLRemoteObjectEncryptionSymmetric) {
-            dataPackage = _decryptionBlock(dataPackage, _symmetricKey);
-        }
-        
-        NSDictionary *dictionary = [NSKeyedUnarchiver unarchiveObjectWithData:dataPackage];
-        NSString *description = dictionary.description;
-        if (description.length > 1000) {
-            description = [description substringToIndex:999];
-        }
-        
-        NSInvocation *invocation __attribute__((objc_precise_lifetime)) = [NSInvocation invocationWithRemoteObjectDictionaryRepresentation:dictionary
-                                                                                        forProtocol:_protocol];
-        
-        if (invocation && [_target respondsToSelector:invocation.selector]) {
-            [invocation invokeWithTarget:_target];
-            [invocation retainArguments];
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+        NSData *dataPackage = receivedDataPackage;
+        @try {
+            if (_encryptionType & SLRemoteObjectEncryptionSymmetric) {
+                dataPackage = _decryptionBlock(dataPackage, _symmetricKey);
+            }
             
-            if (strcmp(@encode(void), invocation.methodSignature.methodReturnType) == 0) {
-                NSData *emptyResponseData = [NSData data];
-                [connection sendDataPackage:emptyResponseData];
-            } else if (strcmp(@encode(id), invocation.methodSignature.methodReturnType) == 0) {
-                __unsafe_unretained id returnObject = nil;
-                [invocation getReturnValue:&returnObject];
+            NSDictionary *dictionary = [NSKeyedUnarchiver unarchiveObjectWithData:dataPackage];
+            
+            NSInvocation *invocation __attribute__((objc_precise_lifetime)) = [NSInvocation invocationWithRemoteObjectDictionaryRepresentation:dictionary
+                                                                                                                                   forProtocol:_protocol];
+            
+            if (invocation && [_target respondsToSelector:invocation.selector]) {
+                dispatch_sync(dispatch_get_main_queue(), ^{
+                    [invocation invokeWithTarget:_target];
+                    [invocation retainArguments];
+                });
                 
-                NSData *responseData = nil;
-                if (returnObject == nil) {
-                    responseData = [NSKeyedArchiver archivedDataWithRootObject:[[_SLNil alloc] init]];
+                if (strcmp(@encode(void), invocation.methodSignature.methodReturnType) == 0) {
+                    NSData *emptyResponseData = [NSData data];
+                    
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        [connection sendDataPackage:emptyResponseData];
+                    });
+                } else if (strcmp(@encode(id), invocation.methodSignature.methodReturnType) == 0) {
+                    __unsafe_unretained id returnObject = nil;
+                    [invocation getReturnValue:&returnObject];
+                    
+                    NSData *responseData = nil;
+                    if (returnObject == nil) {
+                        responseData = [NSKeyedArchiver archivedDataWithRootObject:[[_SLNil alloc] init]];
+                    } else {
+                        NSAssert([returnObject conformsToProtocol:@protocol(NSCoding)], @"returnObject %@ must conform to NSCoding", returnObject);
+                        responseData = [NSKeyedArchiver archivedDataWithRootObject:returnObject];
+                    }
+                    
+                    if (_encryptionType & SLRemoteObjectEncryptionSymmetric) {
+                        responseData = _encryptionBlock(responseData, _symmetricKey);
+                    }
+                    
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        [connection sendDataPackage:responseData];
+                    });
                 } else {
-                    NSAssert([returnObject conformsToProtocol:@protocol(NSCoding)], @"returnObject %@ must conform to NSCoding", returnObject);
-                    responseData = [NSKeyedArchiver archivedDataWithRootObject:returnObject];
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        [connection disconnect];
+                    });
                 }
+            } else {
+                NSData *responseData = responseData = [NSKeyedArchiver archivedDataWithRootObject:[[_SLIncompatibleResponse alloc] init]];
                 
                 if (_encryptionType & SLRemoteObjectEncryptionSymmetric) {
                     responseData = _encryptionBlock(responseData, _symmetricKey);
                 }
                 
-                [connection sendDataPackage:responseData];
-            } else {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [connection sendDataPackage:responseData];
+                });
+            }
+        } @catch (NSException *exception) {
+            NSLog(@"%@", exception.reason);
+            NSLog(@"%@", exception.callStackSymbols);
+            
+            dispatch_async(dispatch_get_main_queue(), ^{
                 [connection disconnect];
-            }
-        } else {
-            NSData *responseData = responseData = [NSKeyedArchiver archivedDataWithRootObject:[[_SLIncompatibleResponse alloc] init]];
-            
-            if (_encryptionType & SLRemoteObjectEncryptionSymmetric) {
-                responseData = _encryptionBlock(responseData, _symmetricKey);
-            }
-            
-            [connection sendDataPackage:responseData];
+            });
         }
-    } @catch (NSException *exception) {
-        NSLog(@"%@", exception.reason);
-        NSLog(@"%@", exception.callStackSymbols);
-        [connection disconnect];
-    }
+    });
 }
 
 #pragma mark - Private category implementation ()

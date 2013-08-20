@@ -323,8 +323,8 @@ static BOOL signatureMatches(const char *signature1, const char *signature2)
     
     if (hostConnection.completionBlock) {
         NSDictionary *userInfo = (@{
-                                  NSLocalizedDescriptionKey: NSLocalizedString(@"Connection to remote host failed", @"")
-                                  });
+                                    NSLocalizedDescriptionKey: NSLocalizedString(@"Connection to remote host failed", @"")
+                                    });
         NSError *error = [NSError errorWithDomain:SLRemoteObjectErrorDomain
                                              code:SLRemoteObjectConnectionFailed
                                          userInfo:userInfo];
@@ -351,8 +351,8 @@ static BOOL signatureMatches(const char *signature1, const char *signature2)
     // if everything worked correctly, we remove the completionBlock => if we have a completion block, there was an error
     if (hostConnection.completionBlock) {
         NSDictionary *userInfo = (@{
-                                  NSLocalizedDescriptionKey: NSLocalizedString(@"Connection to remote host failed", @"")
-                                  });
+                                    NSLocalizedDescriptionKey: NSLocalizedString(@"Connection to remote host failed", @"")
+                                    });
         NSError *error = [NSError errorWithDomain:SLRemoteObjectErrorDomain
                                              code:SLRemoteObjectConnectionFailed
                                          userInfo:userInfo];
@@ -377,54 +377,63 @@ static BOOL signatureMatches(const char *signature1, const char *signature2)
     
     if (hostConnection.completionBlock) {
         // check for incompatible response
-        if (dataPackage.length > 0) {
-            NSData *thisDataPackage = dataPackage;
-            if (_encryptionType & SLRemoteObjectEncryptionSymmetric) {
-                thisDataPackage = _decryptionBlock(thisDataPackage, _symmetricKey);
-            }
-            id object = [NSKeyedUnarchiver unarchiveObjectWithData:thisDataPackage];
-            
-            if ([object isKindOfClass:[_SLIncompatibleResponse class]]) {
-                if (signatureMatches(hostConnection.remoteMethodSignature.methodReturnType, @encode(void))) {
-                    void(^completionBlock)(NSError *error) = hostConnection.completionBlock;
-                    completionBlock([NSError errorWithDomain:SLRemoteObjectErrorDomain code:SLRemoteObjectConnectionIncompatibleProtocol userInfo:NULL]);
-                } else if (signatureMatches(hostConnection.remoteMethodSignature.methodReturnType, @encode(id))) {
-                    void(^completionBlock)(id object, NSError *error) = hostConnection.completionBlock;
-                    completionBlock(nil, [NSError errorWithDomain:SLRemoteObjectErrorDomain code:SLRemoteObjectConnectionIncompatibleProtocol userInfo:NULL]);
-                }
-                
-                hostConnection.completionBlock = nil;
-                
-                dispatch_async(dispatch_get_main_queue(), ^(void) {
-                    [connection disconnect];
-                    [_activeConnection removeObject:connection];
-                });
-                return;
-            }
-        }
-        
-        if (signatureMatches(hostConnection.remoteMethodSignature.methodReturnType, @encode(void))) {
-            void(^completionBlock)(NSError *error) = hostConnection.completionBlock;
-            completionBlock(nil);
-        } else if (signatureMatches(hostConnection.remoteMethodSignature.methodReturnType, @encode(id))) {
-            @try {
-                id object = nil;
-                
+        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+            if (dataPackage.length > 0) {
+                NSData *thisDataPackage = dataPackage;
                 if (_encryptionType & SLRemoteObjectEncryptionSymmetric) {
-                    dataPackage = _decryptionBlock(dataPackage, _symmetricKey);
-                }
-                object = [NSKeyedUnarchiver unarchiveObjectWithData:dataPackage];
-                
-                if ([object isKindOfClass:[_SLNil class]]) {
-                    object = nil;
+                    thisDataPackage = _decryptionBlock(thisDataPackage, _symmetricKey);
                 }
                 
-                void(^completionBlock)(id object, NSError *error) = hostConnection.completionBlock;
-                completionBlock(object, nil);
-            } @catch (NSException *exception) { }
-        }
-        
-        hostConnection.completionBlock = nil;
+                id object = [NSKeyedUnarchiver unarchiveObjectWithData:thisDataPackage];
+                
+                if ([object isKindOfClass:[_SLIncompatibleResponse class]]) {
+                    if (signatureMatches(hostConnection.remoteMethodSignature.methodReturnType, @encode(void))) {
+                        void(^completionBlock)(NSError *error) = hostConnection.completionBlock;
+                        
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            completionBlock([NSError errorWithDomain:SLRemoteObjectErrorDomain code:SLRemoteObjectConnectionIncompatibleProtocol userInfo:NULL]);
+                        });
+                    } else if (signatureMatches(hostConnection.remoteMethodSignature.methodReturnType, @encode(id))) {
+                        void(^completionBlock)(id object, NSError *error) = hostConnection.completionBlock;
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            completionBlock(nil, [NSError errorWithDomain:SLRemoteObjectErrorDomain code:SLRemoteObjectConnectionIncompatibleProtocol userInfo:NULL]);
+                        });
+                    }
+                    
+                    hostConnection.completionBlock = nil;
+                    return;
+                }
+            }
+            
+            if (signatureMatches(hostConnection.remoteMethodSignature.methodReturnType, @encode(void))) {
+                void(^completionBlock)(NSError *error) = hostConnection.completionBlock;
+                
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    completionBlock(nil);
+                });
+            } else if (signatureMatches(hostConnection.remoteMethodSignature.methodReturnType, @encode(id))) {
+                @try {
+                    id object = nil;
+                    NSData *thisDataPackage = dataPackage;
+                    
+                    if (_encryptionType & SLRemoteObjectEncryptionSymmetric) {
+                        thisDataPackage = _decryptionBlock(thisDataPackage, _symmetricKey);
+                    }
+                    object = [NSKeyedUnarchiver unarchiveObjectWithData:thisDataPackage];
+                    
+                    if ([object isKindOfClass:[_SLNil class]]) {
+                        object = nil;
+                    }
+                    
+                    void(^completionBlock)(id object, NSError *error) = hostConnection.completionBlock;
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        completionBlock(object, nil);
+                    });
+                } @catch (NSException *exception) { }
+            }
+            
+            hostConnection.completionBlock = nil;
+        });
     }
     
     dispatch_async(dispatch_get_main_queue(), ^(void) {
@@ -471,8 +480,8 @@ static BOOL signatureMatches(const char *signature1, const char *signature2)
 {
     if ([_queuedConnections containsObject:queuedConnection]) {
         NSDictionary *userInfo = (@{
-                                  NSLocalizedDescriptionKey: NSLocalizedString(@"Could not reach client in given timeout", @"")
-                                  });
+                                    NSLocalizedDescriptionKey: NSLocalizedString(@"Could not reach client in given timeout", @"")
+                                    });
         NSError *error = [NSError errorWithDomain:SLRemoteObjectErrorDomain
                                              code:SLRemoteObjectConnectionFailed
                                          userInfo:userInfo];
