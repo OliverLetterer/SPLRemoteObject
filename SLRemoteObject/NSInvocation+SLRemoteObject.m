@@ -91,6 +91,40 @@ static NSString *protocol_getHash(Protocol *protocol)
 
 @implementation NSInvocation (SLRemoteObject)
 
+- (NSInvocation *)asynchronInvocationForProtocol:(Protocol *)protocol
+{
+    SEL originalSelector = self.selector;
+    SEL asynchronSelector = NULL;
+    
+    if ([NSStringFromSelector(originalSelector) hasSuffix:@":"]) {
+        asynchronSelector = NSSelectorFromString([NSString stringWithFormat:@"%@withCompletionHandler:", NSStringFromSelector(originalSelector)]);
+    } else {
+        asynchronSelector = NSSelectorFromString([NSString stringWithFormat:@"%@WithCompletionHandler:", NSStringFromSelector(originalSelector)]);
+    }
+    
+    struct objc_method_description methodDescription = protocol_getMethodDescription(protocol, asynchronSelector, NO, YES);
+    if (!methodDescription.types) {
+        return nil;
+    }
+    
+    NSMethodSignature *methodSignature = [NSMethodSignature signatureWithObjCTypes:methodDescription.types];
+    
+    NSInvocation *invocation = [NSInvocation invocationWithMethodSignature:methodSignature];
+    invocation.selector = asynchronSelector;
+    
+    for (int i = 0; i < self.methodSignature.numberOfArguments; i++) {
+        if (i == 1) {
+            continue;
+        }
+        
+        void *argument = NULL;
+        [self getArgument:&argument atIndex:i];
+        [invocation setArgument:&argument atIndex:i];
+    }
+    
+    return invocation;
+}
+
 + (NSInvocation *)invocationWithRemoteObjectDictionaryRepresentation:(NSDictionary *)dictionaryRepresentation forProtocol:(Protocol *)protocol
 {
     NSParameterAssert(protocol);

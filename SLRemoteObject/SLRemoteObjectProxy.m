@@ -270,8 +270,68 @@ void SLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBac
             
             NSInvocation *invocation __attribute__((objc_precise_lifetime)) = [NSInvocation invocationWithRemoteObjectDictionaryRepresentation:dictionary
                                                                                                                                    forProtocol:_protocol];
+            NSInvocation *asynchronInvocation __attribute__((objc_precise_lifetime)) = [invocation asynchronInvocationForProtocol:_protocol];
             
-            if (invocation && [_target respondsToSelector:invocation.selector]) {
+            void(^cancelRequest)(void) = ^{
+                NSData *responseData = responseData = [NSKeyedArchiver archivedDataWithRootObject:[[_SLIncompatibleResponse alloc] init]];
+                
+                if (_encryptionType & SLRemoteObjectEncryptionSymmetric) {
+                    responseData = _encryptionBlock(responseData, _symmetricKey);
+                }
+                
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [connection sendDataPackage:responseData];
+                });
+            };
+            
+            if (!invocation) {
+                cancelRequest();
+            }
+            
+            if (asynchronInvocation && [_target respondsToSelector:asynchronInvocation.selector]) {
+                if (strcmp(@encode(void), invocation.methodSignature.methodReturnType) == 0) {
+                    void(^completionBlock)(NSError *error) = ^(NSError *error) {
+                        NSAssert([NSThread currentThread].isMainThread, @"completionBlock must be called on the main thread");
+                        
+                        NSData *emptyResponseData = [NSData data];
+                        [connection sendDataPackage:emptyResponseData];
+                    };
+                    
+                    [asynchronInvocation setArgument:&completionBlock atIndex:asynchronInvocation.methodSignature.numberOfArguments - 1];
+                    [asynchronInvocation retainArguments];
+                } else if (strcmp(@encode(id), invocation.methodSignature.methodReturnType) == 0) {
+                    void(^completionBlock)(id returnObject, NSError *error) = ^(id returnObject, NSError *error) {
+                        NSAssert([NSThread currentThread].isMainThread, @"completionBlock must be called on the main thread");
+                        
+                        dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+                            NSData *responseData = nil;
+                            if (returnObject == nil) {
+                                responseData = [NSKeyedArchiver archivedDataWithRootObject:[[_SLNil alloc] init]];
+                            } else {
+                                NSAssert([returnObject conformsToProtocol:@protocol(NSCoding)], @"returnObject %@ must conform to NSCoding", returnObject);
+                                responseData = [NSKeyedArchiver archivedDataWithRootObject:returnObject];
+                            }
+                            
+                            if (_encryptionType & SLRemoteObjectEncryptionSymmetric) {
+                                responseData = _encryptionBlock(responseData, _symmetricKey);
+                            }
+                            
+                            dispatch_async(dispatch_get_main_queue(), ^{
+                                [connection sendDataPackage:responseData];
+                            });
+                        });
+                    };
+                    
+                    [asynchronInvocation setArgument:&completionBlock atIndex:asynchronInvocation.methodSignature.numberOfArguments - 1];
+                    [asynchronInvocation retainArguments];
+                } else {
+                    NSAssert(NO, @"This case could never happen");
+                }
+                
+                dispatch_sync(dispatch_get_main_queue(), ^{
+                    [asynchronInvocation invokeWithTarget:_target];
+                });
+            } else if ([_target respondsToSelector:invocation.selector]) {
                 dispatch_sync(dispatch_get_main_queue(), ^{
                     [invocation invokeWithTarget:_target];
                     [invocation retainArguments];
@@ -307,16 +367,6 @@ void SLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBac
                         [connection disconnect];
                     });
                 }
-            } else {
-                NSData *responseData = responseData = [NSKeyedArchiver archivedDataWithRootObject:[[_SLIncompatibleResponse alloc] init]];
-                
-                if (_encryptionType & SLRemoteObjectEncryptionSymmetric) {
-                    responseData = _encryptionBlock(responseData, _symmetricKey);
-                }
-                
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    [connection sendDataPackage:responseData];
-                });
             }
         } @catch (NSException *exception) {
             NSLog(@"%@", exception.reason);
