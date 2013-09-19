@@ -255,64 +255,66 @@ static BOOL signatureMatches(const char *signature1, const char *signature2)
         [anInvocation getArgument:&object atIndex:i];
         [remoteInvocation setArgument:&object atIndex:i];
     }
+    [remoteInvocation retainArguments];
+    [anInvocation retainArguments];
     
     NSDictionary *dictionary = [remoteInvocation remoteObjectDictionaryRepresentationForProtocol:_protocol];
-    NSString *description = dictionary.description;
-    if (description.length > 1000) {
-        description = [description substringToIndex:999];
-    }
     
-    NSData *dataPackage = [NSKeyedArchiver archivedDataWithRootObject:dictionary];
-    
-    if (_encryptionType & SLRemoteObjectEncryptionSymmetric) {
-        dataPackage = _encryptionBlock(dataPackage, _symmetricKey);
-    }
-    
-    if (_hostBrowser.resolvedNetServices.count == 0) {
-        // queue data package to laster save
-        __unsafe_unretained id completionBlock = nil;
-        [anInvocation getArgument:&completionBlock atIndex:anInvocation.methodSignature.numberOfArguments - 1];
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
+        __block NSData *dataPackage = [NSKeyedArchiver archivedDataWithRootObject:dictionary];
         
-        _SLRemoteObjectQueuedConnection *queuedConnection = [[_SLRemoteObjectQueuedConnection alloc] init];
-        queuedConnection.completionBlock = completionBlock;
-        queuedConnection.remoteMethodSignature = remoteMethodSignature;
-        queuedConnection.dataPackage = dataPackage;
-        
-        if (_timeoutInterval > 0.0) {
-            __weak typeof(self) weakSelf = self;
-            __weak _SLRemoteObjectQueuedConnection *weakConnection = queuedConnection;
-            dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, _timeoutInterval * NSEC_PER_SEC);
-            
-            [[NSNotificationCenter defaultCenter] postNotificationName:SLRemoteObjectNetworkOperationDidStartNotification object:nil];
-            dispatch_after(popTime, dispatch_get_main_queue(), ^{
-                __strong typeof(weakSelf) strongSelf = weakSelf;
-                __strong _SLRemoteObjectQueuedConnection *strongConnection = weakConnection;
-                [strongSelf _removeQueuedConnectionBecauseOfTimeout:strongConnection];
-            });
-        }
-        
-        [_queuedConnections addObject:queuedConnection];
-    } else {
-        for (NSNetService *netService in _hostBrowser.resolvedNetServices) {
-            __unsafe_unretained id completionBlock = nil;
-            [anInvocation getArgument:&completionBlock atIndex:anInvocation.methodSignature.numberOfArguments - 1];
-            
-            _SLRemoteObjectHostConnection *connection = [[_SLRemoteObjectHostConnection alloc] initWithHostAddress:netService.hostName port:netService.port];
-            connection.completionBlock = completionBlock;
-            connection.delegate = self;
-            connection.remoteMethodSignature = remoteMethodSignature;
-            
-            if (self.encryptionType & SLRemoteObjectEncryptionSSL) {
-                connection.SSLEnabled = YES;
-                connection.peerDomainName = self.peerDomainName;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (_encryptionType & SLRemoteObjectEncryptionSymmetric) {
+                dataPackage = _encryptionBlock(dataPackage, _symmetricKey);
             }
             
-            [_activeConnection addObject:connection];
-            
-            [connection connect];
-            [connection sendDataPackage:dataPackage];
-        }
-    }
+            if (_hostBrowser.resolvedNetServices.count == 0) {
+                // queue data package to laster save
+                __unsafe_unretained id completionBlock = nil;
+                [anInvocation getArgument:&completionBlock atIndex:anInvocation.methodSignature.numberOfArguments - 1];
+                
+                _SLRemoteObjectQueuedConnection *queuedConnection = [[_SLRemoteObjectQueuedConnection alloc] init];
+                queuedConnection.completionBlock = completionBlock;
+                queuedConnection.remoteMethodSignature = remoteMethodSignature;
+                queuedConnection.dataPackage = dataPackage;
+                
+                if (_timeoutInterval > 0.0) {
+                    __weak typeof(self) weakSelf = self;
+                    __weak _SLRemoteObjectQueuedConnection *weakConnection = queuedConnection;
+                    dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, _timeoutInterval * NSEC_PER_SEC);
+                    
+                    [[NSNotificationCenter defaultCenter] postNotificationName:SLRemoteObjectNetworkOperationDidStartNotification object:nil];
+                    dispatch_after(popTime, dispatch_get_main_queue(), ^{
+                        __strong typeof(weakSelf) strongSelf = weakSelf;
+                        __strong _SLRemoteObjectQueuedConnection *strongConnection = weakConnection;
+                        [strongSelf _removeQueuedConnectionBecauseOfTimeout:strongConnection];
+                    });
+                }
+                
+                [_queuedConnections addObject:queuedConnection];
+            } else {
+                for (NSNetService *netService in _hostBrowser.resolvedNetServices) {
+                    __unsafe_unretained id completionBlock = nil;
+                    [anInvocation getArgument:&completionBlock atIndex:anInvocation.methodSignature.numberOfArguments - 1];
+                    
+                    _SLRemoteObjectHostConnection *connection = [[_SLRemoteObjectHostConnection alloc] initWithHostAddress:netService.hostName port:netService.port];
+                    connection.completionBlock = completionBlock;
+                    connection.delegate = self;
+                    connection.remoteMethodSignature = remoteMethodSignature;
+                    
+                    if (self.encryptionType & SLRemoteObjectEncryptionSSL) {
+                        connection.SSLEnabled = YES;
+                        connection.peerDomainName = self.peerDomainName;
+                    }
+                    
+                    [_activeConnection addObject:connection];
+                    
+                    [connection connect];
+                    [connection sendDataPackage:dataPackage];
+                }
+            }
+        });
+    });
 }
 
 #pragma mark - _SLRemoteObjectConnectionDelegate
