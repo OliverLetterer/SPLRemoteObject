@@ -29,50 +29,23 @@
 #import <objc/runtime.h>
 #import <CommonCrypto/CommonDigest.h>
 
-static NSString *protocol_getHash(Protocol *protocol)
+static NSString *protocol_getHashForSelector(Protocol *protocol, SEL selector)
 {
     NSCParameterAssert(protocol);
+    NSCParameterAssert(selector);
     
     NSMutableArray *descriptionsHash = [NSMutableArray array];
     
-    void(^appendMethodDescription)(BOOL isRequiredMethod, BOOL isInstanceMethod) = ^(BOOL isRequiredMethod, BOOL isInstanceMethod) {
-        unsigned int count = 0;
-        struct objc_method_description *methodDescriptions = protocol_copyMethodDescriptionList(protocol, isRequiredMethod, isInstanceMethod, &count);
-        
-        for (int i = 0; i < count; i++) {
-            [descriptionsHash addObject:[NSString stringWithFormat:@"%@%s", NSStringFromSelector(methodDescriptions[i].name), methodDescriptions[i].types]];
-        }
-        
-        free(methodDescriptions);
-    };
-    
-    appendMethodDescription(YES, YES);
-    appendMethodDescription(YES, NO);
-    appendMethodDescription(NO, YES);
-    appendMethodDescription(NO, NO);
-    
-    [descriptionsHash sortUsingSelector:@selector(compare:)];
-    
-    NSMutableString *stringToHash = [NSMutableString stringWithFormat:@"%s", protocol_getName(protocol)];
-    
-    for (NSString *string in descriptionsHash) {
-        [stringToHash appendString:string];
+    struct objc_method_description methodDescription = protocol_getMethodDescription(protocol, selector, YES, YES);
+    if (!methodDescription.name || !methodDescription.types) {
+        struct objc_method_description methodDescription = protocol_getMethodDescription(protocol, selector, NO, YES);
     }
     
-    unsigned int count = 0;
-    Protocol * __unsafe_unretained *protocols = protocol_copyProtocolList(protocol, &count);
-    
-    NSMutableArray *protocolNames = [NSMutableArray arrayWithCapacity:count];
-    
-    for (int i = 0; i < count; i++) {
-        [protocolNames addObject:[NSString stringWithFormat:@"%s", protocol_getName(protocols[i])]];
+    if (!methodDescription.name) {
+        return nil;
     }
     
-    [protocolNames sortUsingSelector:@selector(compare:)];
-    
-    for (NSString *protocolName in protocolNames) {
-        [stringToHash appendString:protocol_getHash(NSProtocolFromString(protocolName))];
-    }
+    NSString *stringToHash = [NSString stringWithFormat:@"%@%s", NSStringFromSelector(methodDescription.name), methodDescription.types];
     
     const char *string = stringToHash.UTF8String;
     unsigned char md5Buffer[CC_MD5_DIGEST_LENGTH];
@@ -129,18 +102,19 @@ static NSString *protocol_getHash(Protocol *protocol)
 {
     NSParameterAssert(protocol);
     
-    NSString *protocolHash = protocol_getHash(protocol);
-    
-    if (![protocolHash isEqual:dictionaryRepresentation[@"protocol_hash"]]) {
-        NSLog(@"protocol hash does not match, => rejecting remote request");
-        return nil;
-    }
-    
     NSString *selectorName = dictionaryRepresentation[@"selector"];
     SEL selector = NSSelectorFromString(selectorName);
     
+    
+    
     if (!selector) {
         NSLog(@"selector %@ not found", selectorName);
+        return nil;
+    }
+    
+    NSString *protocolHash = protocol_getHashForSelector(protocol, selector);
+    if (![protocolHash isEqual:dictionaryRepresentation[@"protocol_hash"]]) {
+        NSLog(@"protocol hash does not match, => rejecting remote request");
         return nil;
     }
     
@@ -177,10 +151,10 @@ static NSString *protocol_getHash(Protocol *protocol)
 {
     NSParameterAssert(protocol);
     
-    NSMutableDictionary *dictionaryRepresentation = (@{
-                                                     @"selector": NSStringFromSelector(self.selector),
-                                                     @"protocol_hash": protocol_getHash(protocol)
-                                                     }).mutableCopy;
+    NSMutableDictionary *dictionaryRepresentation = @{
+                                                      @"selector": NSStringFromSelector(self.selector),
+                                                      @"protocol_hash": protocol_getHashForSelector(protocol, self.selector)
+                                                      }.mutableCopy;
     
     NSMutableArray *objects = [NSMutableArray arrayWithCapacity:self.methodSignature.numberOfArguments];
     
