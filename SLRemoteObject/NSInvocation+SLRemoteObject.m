@@ -34,11 +34,9 @@ static NSString *protocol_getHashForSelector(Protocol *protocol, SEL selector)
     NSCParameterAssert(protocol);
     NSCParameterAssert(selector);
     
-    NSMutableArray *descriptionsHash = [NSMutableArray array];
-    
     struct objc_method_description methodDescription = protocol_getMethodDescription(protocol, selector, YES, YES);
     if (!methodDescription.name || !methodDescription.types) {
-        struct objc_method_description methodDescription = protocol_getMethodDescription(protocol, selector, NO, YES);
+        methodDescription = protocol_getMethodDescription(protocol, selector, NO, YES);
     }
     
     if (!methodDescription.name) {

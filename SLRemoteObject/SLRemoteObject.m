@@ -566,8 +566,6 @@ static BOOL signatureMatches(const char *signature1, const char *signature2)
     NSArray *serviceNameComponents = [serviceName componentsSeparatedByString:@"."];
     NSUInteger serviceNameComponentsCount = serviceNameComponents.count;
     
-    
-    NSString *protocol = @"_tcp";
     NSString *fullname = [[serviceNameComponents subarrayWithRange:NSMakeRange(1, serviceNameComponentsCount - 1)] componentsJoinedByString:@"."];
     int retVal = EXIT_SUCCESS;
     NSMutableData *recordData = [[NSMutableData alloc] init];
