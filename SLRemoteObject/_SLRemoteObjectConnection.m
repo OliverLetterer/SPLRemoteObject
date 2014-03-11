@@ -148,14 +148,14 @@ static BOOL streamIsHealthyAndOpen(NSStream *stream)
 
             _certificates = @[ (__bridge id)self.identity ];
             OSStatus status = SSLSetCertificate(_sslContext, (__bridge CFArrayRef)_certificates);
-            NSAssert(status == noErr, @"error in SSLSetCertificate: %d", status);
+            NSAssert(status == noErr, @"error in SSLSetCertificate: %ld", (long)status);
         }
 
         OSStatus status = SSLSetIOFuncs(_sslContext, _SLRemoteObjectConnectionSSLReadFunction, _SLRemoteObjectConnectionSSLWriteFunction);
-        NSAssert(status == noErr, @"error in SSLSetIOFuncs: %d", status);
+        NSAssert(status == noErr, @"error in SSLSetIOFuncs: %ld", (long)status);
 
         status = SSLSetConnection(_sslContext, (__bridge void *)self);
-        NSAssert(status == noErr, @"error in SSLSetIOFuncs: %d", status);
+        NSAssert(status == noErr, @"error in SSLSetIOFuncs: %ld", (long)status);
     }
 }
 
@@ -171,7 +171,7 @@ static BOOL streamIsHealthyAndOpen(NSStream *stream)
 
     if (self.SSLEnabled) {
         OSStatus status = SSLClose(_sslContext);
-        NSAssert(status == noErr, @"error in SSLClose: %d", status);
+        NSAssert(status == noErr, @"error in SSLClose: %ld", (long)status);
     }
 
     self.inputStream = nil;
@@ -240,7 +240,7 @@ static BOOL streamIsHealthyAndOpen(NSStream *stream)
                 return;
             }
 
-            NSAssert(status == noErr || status == errSSLWouldBlock, @"error in SSLRead: %d", status);
+            NSAssert(status == noErr || status == errSSLWouldBlock, @"error in SSLRead: %ld", (long)status);
         } else {
             processed = [self _readDataFromReadStream:buffer length:sizeof(buffer)];
         }
@@ -319,7 +319,7 @@ static BOOL streamIsHealthyAndOpen(NSStream *stream)
             return;
         }
 
-        NSAssert(status == noErr || status == errSSLWouldBlock, @"error in SSLWrite: %d", status);
+        NSAssert(status == noErr || status == errSSLWouldBlock, @"error in SSLWrite: %ld", (long)status);
     } else {
         processed = [self _writeDataToWriteStream:_outgoingDataBuffer.bytes length:_outgoingDataBuffer.length];
     }
@@ -393,7 +393,7 @@ static BOOL streamIsHealthyAndOpen(NSStream *stream)
         [self _readNextChunkOfData];
         [self _sendNextChunkOfData];
     } else if (status != errSSLWouldBlock) {
-        NSAssert(NO, @"error in SSLHandshake: %d", status);
+        NSAssert(NO, @"error in SSLHandshake: %ld", (long)status);
     }
 }
 
@@ -418,7 +418,7 @@ OSStatus _SLRemoteObjectConnectionSSLWriteFunction(SSLConnectionRef connection, 
 {
     _SLRemoteObjectConnection *connectionObject = (__bridge _SLRemoteObjectConnection *)connection;
     size_t bytesWritten = [connectionObject _writeDataToWriteStream:data length:*dataLength];
-
+    
     if (bytesWritten == *dataLength) {
         return noErr;
     } else {
