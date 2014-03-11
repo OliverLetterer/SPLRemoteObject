@@ -33,28 +33,28 @@ static NSString *protocol_getHashForSelector(Protocol *protocol, SEL selector)
 {
     NSCParameterAssert(protocol);
     NSCParameterAssert(selector);
-    
+
     struct objc_method_description methodDescription = protocol_getMethodDescription(protocol, selector, YES, YES);
     if (!methodDescription.name || !methodDescription.types) {
         methodDescription = protocol_getMethodDescription(protocol, selector, NO, YES);
     }
-    
+
     if (!methodDescription.name) {
         return nil;
     }
-    
+
     NSString *stringToHash = [NSString stringWithFormat:@"%@%s", NSStringFromSelector(methodDescription.name), methodDescription.types];
-    
+
     const char *string = stringToHash.UTF8String;
     unsigned char md5Buffer[CC_MD5_DIGEST_LENGTH];
-    CC_MD5(string, strlen(string), md5Buffer);
-    
+    CC_MD5(string, (CC_LONG)strlen(string), md5Buffer);
+
     // Convert MD5 value in the buffer to NSString of hex values
     NSMutableString *hash = [NSMutableString stringWithCapacity:CC_MD5_DIGEST_LENGTH * 2];
     for(int i = 0; i < CC_MD5_DIGEST_LENGTH; i++) {
         [hash appendFormat:@"%02x", md5Buffer[i]];
     }
-    
+
     return hash;
 }
 
@@ -66,73 +66,73 @@ static NSString *protocol_getHashForSelector(Protocol *protocol, SEL selector)
 {
     SEL originalSelector = self.selector;
     SEL asynchronSelector = NULL;
-    
+
     if ([NSStringFromSelector(originalSelector) hasSuffix:@":"]) {
         asynchronSelector = NSSelectorFromString([NSString stringWithFormat:@"%@withCompletionHandler:", NSStringFromSelector(originalSelector)]);
     } else {
         asynchronSelector = NSSelectorFromString([NSString stringWithFormat:@"%@WithCompletionHandler:", NSStringFromSelector(originalSelector)]);
     }
-    
+
     struct objc_method_description methodDescription = protocol_getMethodDescription(protocol, asynchronSelector, NO, YES);
     if (!methodDescription.types) {
         return nil;
     }
-    
+
     NSMethodSignature *methodSignature = [NSMethodSignature signatureWithObjCTypes:methodDescription.types];
-    
+
     NSInvocation *invocation = [NSInvocation invocationWithMethodSignature:methodSignature];
     invocation.selector = asynchronSelector;
-    
+
     for (int i = 0; i < self.methodSignature.numberOfArguments; i++) {
         if (i == 1) {
             continue;
         }
-        
+
         void *argument = NULL;
         [self getArgument:&argument atIndex:i];
         [invocation setArgument:&argument atIndex:i];
     }
-    
+
     return invocation;
 }
 
 + (NSInvocation *)invocationWithRemoteObjectDictionaryRepresentation:(NSDictionary *)dictionaryRepresentation forProtocol:(Protocol *)protocol
 {
     NSParameterAssert(protocol);
-    
+
     NSString *selectorName = dictionaryRepresentation[@"selector"];
     SEL selector = NSSelectorFromString(selectorName);
-    
-    
-    
+
+
+
     if (!selector) {
         NSLog(@"selector %@ not found", selectorName);
         return nil;
     }
-    
+
     NSString *protocolHash = protocol_getHashForSelector(protocol, selector);
     if (![protocolHash isEqual:dictionaryRepresentation[@"protocol_hash"]]) {
         NSLog(@"protocol hash does not match, => rejecting remote request");
         return nil;
     }
-    
+
     struct objc_method_description methodDescription = protocol_getMethodDescription(protocol, selector, YES, YES);
     if (!methodDescription.types) {
         NSLog(@"protocol %s does not contain %@", protocol_getName(protocol), selectorName);
         return nil;
     }
-    
+
     NSMethodSignature *methodSignature = [NSMethodSignature signatureWithObjCTypes:methodDescription.types];
-    
+
     NSInvocation *invocation = [NSInvocation invocationWithMethodSignature:methodSignature];
     invocation.selector = selector;
-    
+
     NSArray *objects = dictionaryRepresentation[@"objects"];
     if (objects.count + 2 != methodSignature.numberOfArguments) {
         NSLog(@"number of arguments does not match => rejecting remote request");
         return nil;
     }
-    
+
     [objects enumerateObjectsUsingBlock:^(id object, NSUInteger index, BOOL *stop) {
         if ([object isKindOfClass:[_SLNil class]]) {
             id nilObject = nil;
@@ -141,25 +141,25 @@ static NSString *protocol_getHashForSelector(Protocol *protocol, SEL selector)
             [invocation setArgument:&object atIndex:index + 2];
         }
     }];
-    
+
     return invocation;
 }
 
 - (NSDictionary *)remoteObjectDictionaryRepresentationForProtocol:(Protocol *)protocol
 {
     NSParameterAssert(protocol);
-    
+
     NSMutableDictionary *dictionaryRepresentation = @{
                                                       @"selector": NSStringFromSelector(self.selector),
                                                       @"protocol_hash": protocol_getHashForSelector(protocol, self.selector)
                                                       }.mutableCopy;
-    
+
     NSMutableArray *objects = [NSMutableArray arrayWithCapacity:self.methodSignature.numberOfArguments];
-    
+
     for (uint i = 2; i < self.methodSignature.numberOfArguments; i++) {
         __unsafe_unretained NSObject<NSCoding> *object = nil;
         [self getArgument:&object atIndex:i];
-        
+
         if (!object) {
             _SLNil *nilObject = [[_SLNil alloc] init];
             [objects addObject:nilObject];
@@ -168,9 +168,9 @@ static NSString *protocol_getHashForSelector(Protocol *protocol, SEL selector)
             [objects addObject:object];
         }
     }
-    
+
     dictionaryRepresentation[@"objects"] = objects;
-    
+
     return dictionaryRepresentation;
 }
 

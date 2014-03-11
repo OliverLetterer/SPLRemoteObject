@@ -34,10 +34,10 @@
 @interface _SLRemoteObjectHostConnection : _SLRemoteObjectConnection
 
 @property (nonatomic, readonly) NSString *host;
-@property (nonatomic, readonly) UInt32 port;
+@property (nonatomic, readonly) NSInteger port;
 @property (nonatomic, copy) id completionBlock;
 @property (nonatomic, strong) NSMethodSignature *remoteMethodSignature;
 
-- (id)initWithHostAddress:(NSString *)host port:(UInt32)port;
+- (id)initWithHostAddress:(NSString *)host port:(NSInteger)port;
 
 @end

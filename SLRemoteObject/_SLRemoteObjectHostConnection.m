@@ -29,7 +29,7 @@
 
 
 @interface _SLRemoteObjectHostConnection () {
-    
+
 }
 
 @end
@@ -47,7 +47,7 @@
 
 #pragma mark - Initialization
 
-- (id)initWithHostAddress:(NSString *)host port:(UInt32)port
+- (id)initWithHostAddress:(NSString *)host port:(NSInteger)port
 {
     if (self = [super init]) {
         _host = host;
@@ -60,12 +60,12 @@
 {
     CFReadStreamRef readStream = NULL;
     CFWriteStreamRef writeStream = NULL;
-    
-    CFStreamCreatePairWithSocketToHost(kCFAllocatorDefault, (__bridge CFStringRef)_host, _port, &readStream, &writeStream);
-    
+
+    CFStreamCreatePairWithSocketToHost(kCFAllocatorDefault, (__bridge CFStringRef)_host, (unsigned int)_port, &readStream, &writeStream);
+
     self.inputStream = (__bridge_transfer NSInputStream *)readStream;
     self.outputStream = (__bridge_transfer NSOutputStream *)writeStream;
-    
+
     [super connect];
 }
 
@@ -73,7 +73,7 @@
 
 - (void)dealloc
 {
-    
+
 }
 
 #pragma mark - Private category implementation ()

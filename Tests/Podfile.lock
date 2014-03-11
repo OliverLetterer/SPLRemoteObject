@@ -1,7 +1,7 @@
 PODS:
   - Expecta (0.2.3)
   - OCMock (2.2.1)
-  - SLObjectiveCRuntimeAdditions (1.1.0)
+  - SLObjectiveCRuntimeAdditions (1.1.2)
   - SLRemoteObject (1.2.6):
     - SLObjectiveCRuntimeAdditions (>= 1.0.0)
 
@@ -17,7 +17,7 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   Expecta: dbc4a27fabb853bdd2e907e33f11ee43a9a47d0c
   OCMock: 80e4cfbc71a0e1bd28caf10a9fda27da7c4c8402
-  SLObjectiveCRuntimeAdditions: 812d4572096852a5cc7b0f2d979e374c9db5d07b
+  SLObjectiveCRuntimeAdditions: 3fa6a14b9d09ed386180b19de1267bb1cd8a9aad
   SLRemoteObject: e4fc7fd88c8e43b14fd944a8cebb609535637de7
 
-COCOAPODS: 0.27.1
+COCOAPODS: 0.29.0
