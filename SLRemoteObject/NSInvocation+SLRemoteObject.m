@@ -43,7 +43,14 @@ static NSString *protocol_getHashForSelector(Protocol *protocol, SEL selector)
         return nil;
     }
 
-    NSString *stringToHash = [NSString stringWithFormat:@"%@%s", NSStringFromSelector(methodDescription.name), methodDescription.types];
+    NSMethodSignature *signature = [NSMethodSignature signatureWithObjCTypes:methodDescription.types];
+
+    NSMutableString *stringToHash = [NSMutableString stringWithString:NSStringFromSelector(methodDescription.name)];
+    [stringToHash appendFormat:@"%c", signature.methodReturnType[0]];
+
+    for (NSInteger i = 0; i < signature.numberOfArguments; i++) {
+        [stringToHash appendFormat:@"%c", [signature getArgumentTypeAtIndex:i][0]];
+    }
 
     const char *string = stringToHash.UTF8String;
     unsigned char md5Buffer[CC_MD5_DIGEST_LENGTH];
@@ -54,7 +61,7 @@ static NSString *protocol_getHashForSelector(Protocol *protocol, SEL selector)
     for(int i = 0; i < CC_MD5_DIGEST_LENGTH; i++) {
         [hash appendFormat:@"%02x", md5Buffer[i]];
     }
-
+    
     return hash;
 }
 

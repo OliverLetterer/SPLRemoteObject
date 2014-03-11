@@ -48,7 +48,7 @@ static BOOL streamIsHealthyAndOpen(NSStream *stream)
     NSMutableData *_incomingDataBuffer;
     NSMutableData *_outgoingDataBuffer;
 
-    size_t _packetBodySize;
+    int32_t _packetBodySize;
 
     BOOL _handshakeEstablished;
 
@@ -187,9 +187,9 @@ static BOOL streamIsHealthyAndOpen(NSStream *stream)
 
 - (void)sendDataPackage:(NSData *)dataPackage
 {
-    size_t length = dataPackage.length;
+    int32_t length = (int32_t)dataPackage.length;
 
-    [_outgoingDataBuffer appendBytes:&length length:sizeof(size_t)];
+    [_outgoingDataBuffer appendBytes:&length length:sizeof(int32_t)];
     [_outgoingDataBuffer appendData:dataPackage];
 
     [self _sendNextChunkOfData];
@@ -250,10 +250,10 @@ static BOOL streamIsHealthyAndOpen(NSStream *stream)
 
     while(YES) {
         if (_packetBodySize == -1) {
-            if (_incomingDataBuffer.length >= sizeof(size_t)) {
-                memcpy(&_packetBodySize, _incomingDataBuffer.bytes, sizeof(size_t));
+            if (_incomingDataBuffer.length >= sizeof(int32_t)) {
+                memcpy(&_packetBodySize, _incomingDataBuffer.bytes, sizeof(int32_t));
 
-                NSRange rangeToDelete = NSMakeRange(0, sizeof(size_t));
+                NSRange rangeToDelete = NSMakeRange(0, sizeof(int32_t));
                 [_incomingDataBuffer replaceBytesInRange:rangeToDelete withBytes:NULL length:0];
             } else {
                 break;
