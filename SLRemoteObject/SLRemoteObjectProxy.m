@@ -76,7 +76,7 @@ void SLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBac
         if (_identity != NULL) {
             CFRelease(_identity), _identity = NULL;
         }
-        
+
         if (identity) {
             _identity = (SecIdentityRef)CFRetain(identity);
         }
@@ -89,7 +89,7 @@ void SLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBac
         if (_socket != NULL) {
             CFRelease(_socket), _socket = NULL;
         }
-        
+
         if (socket) {
             _socket = (CFSocketRef)CFRetain(socket);
         }
@@ -111,32 +111,32 @@ void SLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBac
         _serviceName = serviceName;
         _target = target;
         _protocol = protocol;
-        
+
         _encryptionType = [options[SLRemoteObjectEncryptionType] unsignedIntegerValue];
-        
+
         if (_encryptionType & SLRemoteObjectEncryptionSymmetric) {
             _encryptionBlock = options[SLRemoteObjectSymmetricEncryptionBlock];
             _decryptionBlock = options[SLRemoteObjectSymmetricDecryptionBlock];
             _symmetricKey = options[SLRemoteObjectSymmetricKey];
-            
+
             NSAssert(_encryptionBlock, @"No encryption block found in SLRemoteObjectSymmetricEncryptionBlock");
             NSAssert(_decryptionBlock, @"No decryption block found in SLRemoteObjectSymmetricDecryptionBlock");
             NSAssert(_symmetricKey, @"No symmetric key found in SLRemoteObjectSymmetricKey");
         }
-        
+
         if (_encryptionType & SLRemoteObjectEncryptionSSL) {
             SecIdentityRef identity = (__bridge SecIdentityRef)options[SLRemoteObjectSSLSecIdentityRef];
             NSAssert(identity, @"No identity found in SLRemoteObjectSSLSecIdentityRef");
-            
+
             _identity = (SecIdentityRef)CFRetain(identity);
         }
-        
+
         NSAssert([_target conformsToProtocol:protocol], @"%@ does not conform to protocol %s", target, protocol_getName(protocol));
-        
+
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_applicationDidEnterBackgroundCallback:) name:UIApplicationDidEnterBackgroundNotification object:nil];
-        
+
         [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_applicationWillEnterForegroundCallback:) name:UIApplicationWillEnterForegroundNotification object:nil];
-        
+
         [self startServer];
     }
     return self;
@@ -147,9 +147,9 @@ void SLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBac
 - (void)dealloc
 {
     [[NSNotificationCenter defaultCenter] removeObserver:self];
-    
+
     [self stopServer];
-    
+
     if (_identity) {
         CFRelease(_identity), _identity = NULL;
     }
@@ -163,11 +163,11 @@ void SLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBac
         if (_socket == NULL) {
             [self _startServer];
         }
-        
+
         if (self->_netService == NULL) {
             [self _publishService];
         }
-        
+
         if (self.backgroundTaskIdentifier) {
             [[UIApplication sharedApplication] endBackgroundTask:self.backgroundTaskIdentifier];
             self.backgroundTaskIdentifier = 0;
@@ -181,7 +181,7 @@ void SLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBac
         self.backgroundTaskIdentifier = [[UIApplication sharedApplication] beginBackgroundTaskWithExpirationHandler:^{
             [self _stopServer];
             [self _unpublishService];
-            
+
             [[UIApplication sharedApplication] endBackgroundTask:self.backgroundTaskIdentifier];
             self.backgroundTaskIdentifier = 0;
         }];
@@ -193,7 +193,7 @@ void SLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBac
 - (void)startServer
 {
     _isServerRunning = YES;
-    
+
     [self _startServer];
     [self _publishService];
 }
@@ -201,7 +201,7 @@ void SLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBac
 - (void)stopServer
 {
     _isServerRunning = NO;
-    
+
     [self _stopServer];
     [self _unpublishService];
 }
@@ -218,14 +218,14 @@ void SLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBac
 - (void)netService:(NSNetService *)sender didNotPublish:(NSDictionary *)errorDict
 {
     BOOL wasRunning = _isServerRunning && !_completionHandler;
-    
+
     [self stopServer];
-    
+
     if (_completionHandler) {
         NSError *error = [NSError errorWithDomain:SLRemoteObjectErrorDomain code:0 userInfo:errorDict];
         _completionHandler(error), _completionHandler = nil;
     }
-    
+
     if (wasRunning) {
         double delayInSeconds = 10.0;
         dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, (int64_t)(delayInSeconds * NSEC_PER_SEC));
@@ -233,7 +233,7 @@ void SLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBac
             [self startServer];
         });
     }
-    
+
     NSLog(@"net service did not publish: %@", errorDict);
 }
 
@@ -242,7 +242,7 @@ void SLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBac
 - (void)remoteObjectConnectionConnectionAttemptFailed:(_SLRemoteObjectConnection *)connection
 {
     NSLog(@"%@ connection attempt failed", self);
-    
+
     NSMutableArray *optionConnections = _openConnections;
     dispatch_async(dispatch_get_main_queue(), ^(void) {
         [optionConnections removeObject:connection];
@@ -265,28 +265,28 @@ void SLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBac
             if (_encryptionType & SLRemoteObjectEncryptionSymmetric) {
                 dataPackage = _decryptionBlock(dataPackage, _symmetricKey);
             }
-            
+
             NSDictionary *dictionary = [NSKeyedUnarchiver unarchiveObjectWithData:dataPackage];
-            
+
             NSInvocation *invocation __attribute__((objc_precise_lifetime)) = [NSInvocation invocationWithRemoteObjectDictionaryRepresentation:dictionary
                                                                                                                                    forProtocol:_protocol];
             NSInvocation *asynchronInvocation __attribute__((objc_precise_lifetime)) = [invocation asynchronInvocationForProtocol:_protocol];
-            
+
             if (self.triesToInvokeAsynchronMethodImplementation && asynchronInvocation && [_target respondsToSelector:asynchronInvocation.selector]) {
                 if (strcmp(@encode(void), invocation.methodSignature.methodReturnType) == 0) {
                     void(^completionBlock)(NSError *error) = ^(NSError *error) {
                         NSAssert([NSThread currentThread].isMainThread, @"completionBlock must be called on the main thread");
-                        
+
                         NSData *emptyResponseData = [NSData data];
                         [connection sendDataPackage:emptyResponseData];
                     };
-                    
+
                     [asynchronInvocation setArgument:&completionBlock atIndex:asynchronInvocation.methodSignature.numberOfArguments - 1];
                     [asynchronInvocation retainArguments];
                 } else if (strcmp(@encode(id), invocation.methodSignature.methodReturnType) == 0) {
                     void(^completionBlock)(id returnObject, NSError *error) = ^(id returnObject, NSError *error) {
                         NSAssert([NSThread currentThread].isMainThread, @"completionBlock must be called on the main thread");
-                        
+
                         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
                             NSData *responseData = nil;
                             if (returnObject == nil) {
@@ -295,23 +295,23 @@ void SLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBac
                                 NSAssert([returnObject conformsToProtocol:@protocol(NSCoding)], @"returnObject %@ must conform to NSCoding", returnObject);
                                 responseData = [NSKeyedArchiver archivedDataWithRootObject:returnObject];
                             }
-                            
+
                             if (_encryptionType & SLRemoteObjectEncryptionSymmetric) {
                                 responseData = _encryptionBlock(responseData, _symmetricKey);
                             }
-                            
+
                             dispatch_async(dispatch_get_main_queue(), ^{
                                 [connection sendDataPackage:responseData];
                             });
                         });
                     };
-                    
+
                     [asynchronInvocation setArgument:&completionBlock atIndex:asynchronInvocation.methodSignature.numberOfArguments - 1];
                     [asynchronInvocation retainArguments];
                 } else {
                     NSAssert(NO, @"This case could never happen");
                 }
-                
+
                 dispatch_sync(dispatch_get_main_queue(), ^{
                     [asynchronInvocation invokeWithTarget:_target];
                 });
@@ -320,17 +320,17 @@ void SLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBac
                     [invocation invokeWithTarget:_target];
                     [invocation retainArguments];
                 });
-                
+
                 if (strcmp(@encode(void), invocation.methodSignature.methodReturnType) == 0) {
                     NSData *emptyResponseData = [NSData data];
-                    
+
                     dispatch_async(dispatch_get_main_queue(), ^{
                         [connection sendDataPackage:emptyResponseData];
                     });
                 } else if (strcmp(@encode(id), invocation.methodSignature.methodReturnType) == 0) {
                     __unsafe_unretained id returnObject = nil;
                     [invocation getReturnValue:&returnObject];
-                    
+
                     NSData *responseData = nil;
                     if (returnObject == nil) {
                         responseData = [NSKeyedArchiver archivedDataWithRootObject:[[_SLNil alloc] init]];
@@ -338,11 +338,11 @@ void SLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBac
                         NSAssert([returnObject conformsToProtocol:@protocol(NSCoding)], @"returnObject %@ must conform to NSCoding", returnObject);
                         responseData = [NSKeyedArchiver archivedDataWithRootObject:returnObject];
                     }
-                    
+
                     if (_encryptionType & SLRemoteObjectEncryptionSymmetric) {
                         responseData = _encryptionBlock(responseData, _symmetricKey);
                     }
-                    
+
                     dispatch_async(dispatch_get_main_queue(), ^{
                         [connection sendDataPackage:responseData];
                     });
@@ -353,11 +353,11 @@ void SLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBac
                 }
             } else {
                 NSData *responseData = responseData = [NSKeyedArchiver archivedDataWithRootObject:[[_SLIncompatibleResponse alloc] init]];
-                
+
                 if (_encryptionType & SLRemoteObjectEncryptionSymmetric) {
                     responseData = _encryptionBlock(responseData, _symmetricKey);
                 }
-                
+
                 dispatch_async(dispatch_get_main_queue(), ^{
                     [connection sendDataPackage:responseData];
                 });
@@ -365,7 +365,7 @@ void SLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBac
         } @catch (NSException *exception) {
             NSLog(@"%@", exception.reason);
             NSLog(@"%@", exception.callStackSymbols);
-            
+
             dispatch_async(dispatch_get_main_queue(), ^{
                 [connection disconnect];
             });
@@ -379,12 +379,12 @@ void SLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBac
 {
     _SLRemoteObjectNativeSocketConnection *connection = [[_SLRemoteObjectNativeSocketConnection alloc] initWithNativeSocketHandle:nativeSocketHandle];
     connection.delegate = self;
-    
+
     if (self.encryptionType & SLRemoteObjectEncryptionSSL) {
         connection.SSLEnabled = YES;
         connection.identity = self.identity;
     }
-    
+
     [_openConnections addObject:connection];
     [connection connect];
 }
@@ -392,7 +392,7 @@ void SLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBac
 - (void)_startServer
 {
     CFSocketContext socketContext = {0, (__bridge void *)self, NULL, NULL, NULL};
-    
+
     CFSocketRef socket = CFSocketCreate(kCFAllocatorDefault,
                                         PF_INET,
                                         SOCK_STREAM,
@@ -402,35 +402,35 @@ void SLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBac
                                         &socketContext);
     self.socket = socket;
     CFRelease(socket);
-    
+
     NSAssert(_socket != NULL, @"could not create socket");
-    
+
     // getsockopt will return existing socket option value via this variable
     int reuseExistingAddress = 1;
-    
+
     // Make sure that same listening socket address gets reused after every connection
     setsockopt(CFSocketGetNative(_socket), SOL_SOCKET, SO_REUSEADDR, &reuseExistingAddress, sizeof(reuseExistingAddress));
-    
+
     struct sockaddr_in socketAddress;
     memset(&socketAddress, 0, sizeof(socketAddress));
     socketAddress.sin_len = sizeof(socketAddress);
     socketAddress.sin_family = AF_INET;
     socketAddress.sin_port = 0;
     socketAddress.sin_addr.s_addr = htonl(INADDR_ANY);
-    
+
     NSData *socketAddressData = [NSData dataWithBytes:&socketAddress length:sizeof(socketAddress)];
-    
+
     CFSocketError error = CFSocketSetAddress(_socket, (__bridge CFDataRef)socketAddressData);
     NSAssert(error == kCFSocketSuccess, @"error setting address to socket: %ld", error);
-    
-    NSData *socketAddressActualData = (__bridge NSData *)CFSocketCopyAddress(_socket);
-    
+
+    NSData *socketAddressActualData = (__bridge_transfer NSData *)CFSocketCopyAddress(_socket);
+
     // Convert socket data into a usable structure
     struct sockaddr_in socketAddressActual;
     memcpy(&socketAddressActual, [socketAddressActualData bytes], [socketAddressActualData length]);
-    
+
     _port = ntohs(socketAddressActual.sin_port);
-    
+
     CFRunLoopRef currentRunLoop = CFRunLoopGetCurrent();
     CFRunLoopSourceRef runLoopSource = CFSocketCreateRunLoopSource(kCFAllocatorDefault, _socket, 0);
     CFRunLoopAddSource(currentRunLoop, runLoopSource, kCFRunLoopCommonModes);
@@ -465,12 +465,12 @@ void SLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBac
 void SLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, CFDataRef address, const void *data, void *info)
 {
     SLRemoteObjectProxy *host = (__bridge SLRemoteObjectProxy *)info;
-    
+
     if (type != kCFSocketAcceptCallBack) {
         return;
     }
-    
+
     CFSocketNativeHandle nativeSocketHandle = *((CFSocketNativeHandle *)data);
-    
+
     [host _acceptConnectionFromNewNativeSocket:nativeSocketHandle];
 }
