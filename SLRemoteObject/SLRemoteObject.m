@@ -34,6 +34,7 @@
 #import <objc/runtime.h>
 #import <dns_sd.h>
 #import <net/if.h>
+#import <AssertMacros.h>
 
 char * const SLRemoteObjectInvocationKey;
 
@@ -560,14 +561,13 @@ static BOOL signatureMatches(const char *signature1, const char *signature2)
     });
 }
 
-- (void)_invalidateDNSCache
+- (BOOL)_invalidateDNSCache
 {
     NSString *serviceName = [NSString stringWithFormat:@"%@.%@local.", self.serviceName, self.serviceType];
     NSArray *serviceNameComponents = [serviceName componentsSeparatedByString:@"."];
     NSUInteger serviceNameComponentsCount = serviceNameComponents.count;
 
     NSString *fullname = [[serviceNameComponents subarrayWithRange:NSMakeRange(1, serviceNameComponentsCount - 1)] componentsJoinedByString:@"."];
-    int retVal = EXIT_SUCCESS;
     NSMutableData *recordData = [[NSMutableData alloc] init];
 
     for (NSString *label in serviceNameComponents) {
@@ -577,7 +577,7 @@ static BOOL signatureMatches(const char *signature1, const char *signature2)
         labelString = label.UTF8String;
         if (strlen(labelString) >= 64) {
             fprintf(stderr, "%s: label too long: %s\n", getprogname(), labelString);
-            retVal = EXIT_FAILURE;
+            return NO;
             break;
         } else {
             // cast is safe because of length check
@@ -588,26 +588,26 @@ static BOOL signatureMatches(const char *signature1, const char *signature2)
         }
     }
 
-    if (retVal == EXIT_SUCCESS && recordData.length >= 256) {
+    if (recordData.length >= 256) {
         fprintf(stderr, "%s: record data too long\n", getprogname());
-        retVal = EXIT_FAILURE;
+        return NO;
     }
 
-    if (retVal == EXIT_SUCCESS) {
-        DNSServiceErrorType err = DNSServiceReconfirmRecord(0,
-                                                            if_nametoindex("en0"),
-                                                            [fullname UTF8String],
-                                                            kDNSServiceType_PTR,
-                                                            kDNSServiceClass_IN,
-                                                            // cast is safe because of recordData length check above
-                                                            (uint16_t)[recordData length],
-                                                            [recordData bytes]
-                                                            );
-        if (err != kDNSServiceErr_NoError) {
-            fprintf(stderr, "%s: reconfirm record error: %d\n", getprogname(), (int) err);
-            retVal = EXIT_FAILURE;
-        }
+    DNSServiceErrorType err = DNSServiceReconfirmRecord(0,
+                                                        if_nametoindex("en0"),
+                                                        [fullname UTF8String],
+                                                        kDNSServiceType_PTR,
+                                                        kDNSServiceClass_IN,
+                                                        // cast is safe because of recordData length check above
+                                                        (uint16_t)[recordData length],
+                                                        [recordData bytes]
+                                                        );
+    if (err != kDNSServiceErr_NoError) {
+        fprintf(stderr, "%s: reconfirm record error: %d\n", getprogname(), (int) err);
+        return NO;
     }
+    
+    return YES;
 }
 
 #pragma mark - NSObject
@@ -621,7 +621,7 @@ static BOOL signatureMatches(const char *signature1, const char *signature2)
 
 - (void)dealloc
 {
-
+    
 }
 
 #pragma mark - Private category implementation ()
