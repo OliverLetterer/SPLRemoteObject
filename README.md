@@ -1,4 +1,4 @@
-# SLRemoteObject [![Build Status](https://travis-ci.org/OliverLetterer/SLRemoteObject.png)](https://travis-ci.org/OliverLetterer/SLRemoteObject) ![Version Badge](http://cocoapod-badges.herokuapp.com/v/SLRemoteObject/badge.png) ![License Badge](https://go-shields.herokuapp.com/license-MIT-blue.png)
+# SLRemoteObject [![Build Status](https://travis-ci.org/OliverLetterer/SPLRemoteObject.png)](https://travis-ci.org/OliverLetterer/SPLRemoteObject) ![Version Badge](http://cocoapod-badges.herokuapp.com/v/SPLRemoteObject/badge.png) ![License Badge](https://go-shields.herokuapp.com/license-MIT-blue.png)
 
 It's just an objc RPC framework for your local network. SLRemoteObject let's you communicate between different devices in a local network very easily.
 
