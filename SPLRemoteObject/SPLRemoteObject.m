@@ -158,7 +158,7 @@ static void * SPLRemoteObjectUserInfoObserver = &SPLRemoteObjectUserInfoObserver
 
 - (NSMethodSignature *)methodSignatureForSelector:(SEL)aSelector
 {
-    struct objc_method_description methodDescription = protocol_getMethodDescription(_protocol, aSelector, NO, YES);
+    struct objc_method_description methodDescription = protocol_getMethodDescription(_protocol, aSelector, YES, YES);
 
     if (!methodDescription.types) {
         NSLog(@"seems like protocol %s does not contain selector %@", protocol_getName(_protocol), NSStringFromSelector(aSelector));
@@ -255,63 +255,57 @@ static void * SPLRemoteObjectUserInfoObserver = &SPLRemoteObjectUserInfoObserver
     _SPLRemoteObjectHostConnection *hostConnection = (_SPLRemoteObjectHostConnection *)connection;
 
     if (hostConnection.completionBlock) {
+        id genericCompletionBlock = hostConnection.completionBlock;
+        hostConnection.completionBlock = nil;
+
         // check for incompatible response
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
-            if (dataPackage.length > 0) {
+            SLBlockDescription *blockDescription = [[SLBlockDescription alloc] initWithBlock:genericCompletionBlock];
+            @try {
                 NSData *thisDataPackage = dataPackage;
+
                 if (_encryptionType & SPLRemoteObjectEncryptionSymmetric) {
                     thisDataPackage = _decryptionBlock(thisDataPackage, _symmetricKey);
                 }
+                id object = thisDataPackage.length > 0 ? [NSKeyedUnarchiver unarchiveObjectWithData:thisDataPackage] : nil;
 
-                id object = [NSKeyedUnarchiver unarchiveObjectWithData:thisDataPackage];
+                if ([object isKindOfClass:[_SPLNil class]]) {
+                    object = nil;
+                }
+
+                void(^invokeCompletionHandler)(id object, NSError *error) = ^(id object, NSError *error) {
+                    NSMethodSignature *blockSignature = blockDescription.blockSignature;
+
+                    if (blockSignature.numberOfArguments == 3) {
+                        void(^completionBlock)(id object, NSError *error) = genericCompletionBlock;
+
+                        if (object) {
+                            NSString *className = [NSString stringWithFormat:@"%s", [blockSignature getArgumentTypeAtIndex:1]];
+                            className = [className substringWithRange:NSMakeRange(2, className.length - 3)];
+
+                            if (![object isKindOfClass:NSClassFromString(className)]) {
+                                object = nil;
+                                error = [NSError errorWithDomain:SPLRemoteObjectErrorDomain code:SPLRemoteObjectConnectionIncompatibleProtocol userInfo:NULL];
+                            }
+                        }
+
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            completionBlock(object, error);
+                        });
+                    } else {
+                        void(^completionBlock)(NSError *error) = genericCompletionBlock;
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            completionBlock(error);
+                        });
+                    }
+                };
 
                 if ([object isKindOfClass:[_SPLIncompatibleResponse class]]) {
-                    if (signatureMatches(hostConnection.remoteMethodSignature.methodReturnType, @encode(void))) {
-                        void(^completionBlock)(NSError *error) = hostConnection.completionBlock;
-
-                        dispatch_async(dispatch_get_main_queue(), ^{
-                            completionBlock([NSError errorWithDomain:SPLRemoteObjectErrorDomain code:SPLRemoteObjectConnectionIncompatibleProtocol userInfo:NULL]);
-                        });
-                    } else if (signatureMatches(hostConnection.remoteMethodSignature.methodReturnType, @encode(id))) {
-                        void(^completionBlock)(id object, NSError *error) = hostConnection.completionBlock;
-                        dispatch_async(dispatch_get_main_queue(), ^{
-                            completionBlock(nil, [NSError errorWithDomain:SPLRemoteObjectErrorDomain code:SPLRemoteObjectConnectionIncompatibleProtocol userInfo:NULL]);
-                        });
-                    }
-
-                    hostConnection.completionBlock = nil;
-                    return;
+                    invokeCompletionHandler(nil, [NSError errorWithDomain:SPLRemoteObjectErrorDomain code:SPLRemoteObjectConnectionIncompatibleProtocol userInfo:NULL]);
+                } else {
+                    invokeCompletionHandler(object, nil);
                 }
-            }
-
-            if (signatureMatches(hostConnection.remoteMethodSignature.methodReturnType, @encode(void))) {
-                void(^completionBlock)(NSError *error) = hostConnection.completionBlock;
-
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    completionBlock(nil);
-                });
-            } else if (signatureMatches(hostConnection.remoteMethodSignature.methodReturnType, @encode(id))) {
-                @try {
-                    id object = nil;
-                    NSData *thisDataPackage = dataPackage;
-
-                    if (_encryptionType & SPLRemoteObjectEncryptionSymmetric) {
-                        thisDataPackage = _decryptionBlock(thisDataPackage, _symmetricKey);
-                    }
-                    object = [NSKeyedUnarchiver unarchiveObjectWithData:thisDataPackage];
-
-                    if ([object isKindOfClass:[_SPLNil class]]) {
-                        object = nil;
-                    }
-
-                    void(^completionBlock)(id object, NSError *error) = hostConnection.completionBlock;
-                    dispatch_async(dispatch_get_main_queue(), ^{
-                        completionBlock(object, nil);
-                    });
-                } @catch (NSException *exception) { }
-            }
-
-            hostConnection.completionBlock = nil;
+            } @catch (NSException *exception) { }
         });
     }
 
@@ -392,117 +386,90 @@ static void * SPLRemoteObjectUserInfoObserver = &SPLRemoteObjectUserInfoObserver
 
     NSString *selectorName = NSStringFromSelector(anInvocation.selector);
 
-    // only accept methods with completion handler
-    if (![selectorName hasSuffix:@"withCompletionHandler:"] && ![selectorName hasSuffix:@"WithCompletionHandler:"]) {
-        NSLog(@"can only call methods with a return handler");
-        [self doesNotRecognizeSelector:anInvocation.selector];
+    // validate block argument
+    {
+        __unsafe_unretained id completionBlock = nil;
+        [anInvocation getArgument:&completionBlock atIndex:methodSignature.numberOfArguments - 1];
+
+        if (!completionBlock) {
+            NSLog(@"the completion block argument is mandatory");
+            [self doesNotRecognizeSelector:anInvocation.selector];
+        }
+
+        if (!signatureMatches([methodSignature getArgumentTypeAtIndex:methodSignature.numberOfArguments - 1], @encode(dispatch_block_t))) {
+            NSLog(@"the last argument must a completion block");
+            [self doesNotRecognizeSelector:anInvocation.selector];
+        }
+
+        SLBlockDescription *blockDescription = [[SLBlockDescription alloc] initWithBlock:completionBlock];
+        NSMethodSignature *blockSignature = blockDescription.blockSignature;
+
+        // block return type must be void
+        if (!signatureMatches(blockSignature.methodReturnType, @encode(void))) {
+            NSLog(@"completion handler can only have void return type");
+            [self doesNotRecognizeSelector:anInvocation.selector];
+        }
+
+        if (blockSignature.numberOfArguments == 3) {
+            if (![selectorName hasSuffix:@"WithResultsCompletionHandler:"] && ![selectorName hasSuffix:@"withResultsCompletionHandler:"]) {
+                NSLog(@"method must end in (w|W)ithResultsCompletionHandler:");
+                [self doesNotRecognizeSelector:anInvocation.selector];
+            }
+
+            if (!signatureMatches([blockSignature getArgumentTypeAtIndex:1], @encode(id))) {
+                NSLog(@"first completion handler argument must be id typed");
+                [self doesNotRecognizeSelector:anInvocation.selector];
+            }
+
+            NSString *className = [NSString stringWithFormat:@"%s", [blockSignature getArgumentTypeAtIndex:1]];
+            className = [className substringWithRange:NSMakeRange(2, className.length - 3)];
+
+            if (![NSClassFromString(className) conformsToProtocol:@protocol(NSSecureCoding)]) {
+                NSLog(@"first completion handler argument must conform to NSSecureCoding");
+                [self doesNotRecognizeSelector:anInvocation.selector];
+            }
+
+            NSString *errorClass = [NSString stringWithFormat:@"%s", [blockSignature getArgumentTypeAtIndex:2]];
+            if (![errorClass isEqual:@"@\"NSError\""]) {
+                NSLog(@"second completion handler argument must be an NSError");
+                [self doesNotRecognizeSelector:anInvocation.selector];
+            }
+        } else if (blockSignature.numberOfArguments == 2) {
+            if (![selectorName hasSuffix:@"WithCompletionHandler:"] && ![selectorName hasSuffix:@"withCompletionHandler:"]) {
+                NSLog(@"method must end in (w|W)ithCompletionHandler:");
+                [self doesNotRecognizeSelector:anInvocation.selector];
+            }
+
+            NSString *errorClass = [NSString stringWithFormat:@"%s", [blockSignature getArgumentTypeAtIndex:1]];
+            if (![errorClass isEqual:@"@\"NSError\""]) {
+                NSLog(@"completion handler argument must be an NSError");
+                [self doesNotRecognizeSelector:anInvocation.selector];
+            }
+        } else {
+            NSLog(@"completion handler not supported");
+            [self doesNotRecognizeSelector:anInvocation.selector];
+        }
     }
 
     // return type must be zero
     if (!signatureMatches(methodSignature.methodReturnType, @encode(void))) {
-        NSLog(@"can only call methods with a void return type. use method with return handler");
+        NSLog(@"can only call methods with a void return type");
         [self doesNotRecognizeSelector:anInvocation.selector];
     }
-
-    SEL remoteSelector = NULL;
-
-    NSString *possibleSuffix1 = @"withCompletionHandler:";
-    NSString *possibleSuffix2 = @"WithCompletionHandler:";
-    if ([selectorName hasSuffix:possibleSuffix1]) {
-        NSString *remoteSelectorName = [selectorName stringByReplacingOccurrencesOfString:possibleSuffix1
-                                                                               withString:@""
-                                                                                  options:NSLiteralSearch
-                                                                                    range:NSMakeRange(selectorName.length - possibleSuffix1.length, possibleSuffix1.length)];
-        remoteSelector = NSSelectorFromString(remoteSelectorName);
-    } else if ([selectorName hasSuffix:possibleSuffix2]) {
-        NSString *remoteSelectorName = [selectorName stringByReplacingOccurrencesOfString:possibleSuffix2
-                                                                               withString:@""
-                                                                                  options:NSLiteralSearch
-                                                                                    range:NSMakeRange(selectorName.length - possibleSuffix2.length, possibleSuffix2.length)];
-        remoteSelector = NSSelectorFromString(remoteSelectorName);
-    }
-
-    if (remoteSelector == NULL) {
-        NSLog(@"protocol selector %@ must have a pendend without completion handler which will be executed on remote proxy", selectorName);
-        [self doesNotRecognizeSelector:anInvocation.selector];
-    }
-
-    struct objc_method_description remoteMethodDescription = protocol_getMethodDescription(_protocol, remoteSelector, YES, YES);
-
-    if (remoteMethodDescription.types == NULL) {
-        NSLog(@"selector %@ in protocol %s not found", NSStringFromSelector(remoteSelector), protocol_getName(_protocol));
-        [self doesNotRecognizeSelector:anInvocation.selector];
-    }
-
-    NSMethodSignature *remoteMethodSignature = [NSMethodSignature signatureWithObjCTypes:remoteMethodDescription.types];
 
     // validate arguments
-    for (NSUInteger i = 0; i < numberOfArguments; i++) {
-        if (i < numberOfArguments - 1) {
-            if (!signatureMatches([methodSignature getArgumentTypeAtIndex:i], [remoteMethodSignature getArgumentTypeAtIndex:i])) {
-                NSLog(@"argument %lu on host does not match argument on remote", (unsigned long)i);
+    for (NSUInteger i = 2; i < numberOfArguments - 2; i++) {
+        if (i > 1) {
+            if (!signatureMatches([methodSignature getArgumentTypeAtIndex:i], @encode(id))) {
+                NSLog(@"all arguments must be an id typed subclass");
                 [self doesNotRecognizeSelector:anInvocation.selector];
-            }
-        }
-
-        if (i == numberOfArguments - 1) {
-            __unsafe_unretained id completionBlock = nil;
-            [anInvocation getArgument:&completionBlock atIndex:i];
-            SLBlockDescription *blockDescription = [[SLBlockDescription alloc] initWithBlock:completionBlock];
-            NSMethodSignature *blockSignature = blockDescription.blockSignature;
-
-            // block return type must be void
-            if (!signatureMatches(blockSignature.methodReturnType, @encode(void))) {
-                NSLog(@"completion handler can only have void return type");
-                [self doesNotRecognizeSelector:anInvocation.selector];
-            }
-
-            if (signatureMatches(remoteMethodSignature.methodReturnType, @encode(void))) {
-                // remote method returns void
-                if (blockSignature.numberOfArguments != 2) {
-                    NSLog(@"completion handler can only have an NSError parameter");
-                    [self doesNotRecognizeSelector:anInvocation.selector];
-                }
-
-                if (!signatureMatches([blockSignature getArgumentTypeAtIndex:1], @encode(id))) {
-                    NSLog(@"completion handler can only have an NSError parameter");
-                    [self doesNotRecognizeSelector:anInvocation.selector];
-                }
-            } else if (signatureMatches(remoteMethodSignature.methodReturnType, @encode(id))) {
-                // object return type
-                if (blockSignature.numberOfArguments != 3) {
-                    NSLog(@"completion handler can only have a result and NSError parameter");
-                    [self doesNotRecognizeSelector:anInvocation.selector];
-                }
-
-                if (!signatureMatches([blockSignature getArgumentTypeAtIndex:1], @encode(id))) {
-                    NSLog(@"completion handler can only have a result and NSError parameter");
-                    [self doesNotRecognizeSelector:anInvocation.selector];
-                }
-
-                if (!signatureMatches([blockSignature getArgumentTypeAtIndex:2], @encode(id))) {
-                    NSLog(@"completion handler can only have a result and NSError parameter");
-                    [self doesNotRecognizeSelector:anInvocation.selector];
-                }
-            } else {
-                // other return type
-                NSLog(@"remote methods can only return void or an id type object");
-                [self doesNotRecognizeSelector:anInvocation.selector];
-            }
-        } else {
-            // every argument after self and _cmd must be of id type
-            if (i > 1) {
-                if (!signatureMatches([methodSignature getArgumentTypeAtIndex:i], @encode(id))) {
-                    NSLog(@"all arguments must be an NSObject subclass");
-                    [self doesNotRecognizeSelector:anInvocation.selector];
-                }
             }
         }
     }
 
     // Now build remote invocation
-    NSInvocation *remoteInvocation = [NSInvocation invocationWithMethodSignature:remoteMethodSignature];
-    remoteInvocation.selector = remoteSelector;
+    NSInvocation *remoteInvocation = [NSInvocation invocationWithMethodSignature:methodSignature];
+    remoteInvocation.selector = anInvocation.selector;
 
     for (NSUInteger i = 2; i < numberOfArguments - 1; i++) {
         __unsafe_unretained id object = nil;
@@ -528,7 +495,7 @@ static void * SPLRemoteObjectUserInfoObserver = &SPLRemoteObjectUserInfoObserver
 
                 _SPLRemoteObjectQueuedConnection *queuedConnection = [[_SPLRemoteObjectQueuedConnection alloc] init];
                 queuedConnection.completionBlock = completionBlock;
-                queuedConnection.remoteMethodSignature = remoteMethodSignature;
+                queuedConnection.remoteMethodSignature = methodSignature;
                 queuedConnection.dataPackage = dataPackage;
                 queuedConnection.shouldRetryIfConnectionFails = YES;
                 objc_setAssociatedObject(queuedConnection, &SPLRemoteObjectInvocationKey, anInvocation, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
@@ -555,7 +522,7 @@ static void * SPLRemoteObjectUserInfoObserver = &SPLRemoteObjectUserInfoObserver
                     _SPLRemoteObjectHostConnection *connection = [[_SPLRemoteObjectHostConnection alloc] initWithHostAddress:netService.hostName port:netService.port];
                     connection.completionBlock = completionBlock;
                     connection.delegate = self;
-                    connection.remoteMethodSignature = remoteMethodSignature;
+                    connection.remoteMethodSignature = methodSignature;
                     connection.shouldRetryIfConnectionFails = YES;
                     objc_setAssociatedObject(connection, &SPLRemoteObjectInvocationKey, anInvocation, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 

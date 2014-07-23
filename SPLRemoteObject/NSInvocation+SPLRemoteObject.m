@@ -69,40 +69,6 @@ static NSString *protocol_getHashForSelector(Protocol *protocol, SEL selector)
 
 @implementation NSInvocation (SPLRemoteObject)
 
-- (NSInvocation *)asynchronInvocationForProtocol:(Protocol *)protocol
-{
-    SEL originalSelector = self.selector;
-    SEL asynchronSelector = NULL;
-
-    if ([NSStringFromSelector(originalSelector) hasSuffix:@":"]) {
-        asynchronSelector = NSSelectorFromString([NSString stringWithFormat:@"%@withCompletionHandler:", NSStringFromSelector(originalSelector)]);
-    } else {
-        asynchronSelector = NSSelectorFromString([NSString stringWithFormat:@"%@WithCompletionHandler:", NSStringFromSelector(originalSelector)]);
-    }
-
-    struct objc_method_description methodDescription = protocol_getMethodDescription(protocol, asynchronSelector, NO, YES);
-    if (!methodDescription.types) {
-        return nil;
-    }
-
-    NSMethodSignature *methodSignature = [NSMethodSignature signatureWithObjCTypes:methodDescription.types];
-
-    NSInvocation *invocation = [NSInvocation invocationWithMethodSignature:methodSignature];
-    invocation.selector = asynchronSelector;
-
-    for (int i = 0; i < self.methodSignature.numberOfArguments; i++) {
-        if (i == 1) {
-            continue;
-        }
-
-        void *argument = NULL;
-        [self getArgument:&argument atIndex:i];
-        [invocation setArgument:&argument atIndex:i];
-    }
-
-    return invocation;
-}
-
 + (NSInvocation *)invocationWithRemoteObjectDictionaryRepresentation:(NSDictionary *)dictionaryRepresentation forProtocol:(Protocol *)protocol
 {
     NSParameterAssert(protocol);
@@ -135,7 +101,7 @@ static NSString *protocol_getHashForSelector(Protocol *protocol, SEL selector)
     invocation.selector = selector;
 
     NSArray *objects = dictionaryRepresentation[@"objects"];
-    if (objects.count + 2 != methodSignature.numberOfArguments) {
+    if (objects.count + 3 != methodSignature.numberOfArguments) {
         NSLog(@"number of arguments does not match => rejecting remote request");
         return nil;
     }
@@ -163,7 +129,7 @@ static NSString *protocol_getHashForSelector(Protocol *protocol, SEL selector)
 
     NSMutableArray *objects = [NSMutableArray arrayWithCapacity:self.methodSignature.numberOfArguments];
 
-    for (uint i = 2; i < self.methodSignature.numberOfArguments; i++) {
+    for (NSInteger i = 2; i < self.methodSignature.numberOfArguments - 1; i++) {
         __unsafe_unretained NSObject<NSCoding> *object = nil;
         [self getArgument:&object atIndex:i];
 
@@ -171,7 +137,7 @@ static NSString *protocol_getHashForSelector(Protocol *protocol, SEL selector)
             _SPLNil *nilObject = [[_SPLNil alloc] init];
             [objects addObject:nilObject];
         } else {
-            NSAssert([object conformsToProtocol:@protocol(NSCoding)], @"all objects must conform to NSCoding");
+            NSAssert([object conformsToProtocol:@protocol(NSSecureCoding)], @"all objects must conform to NSSecureCoding");
             [objects addObject:object];
         }
     }

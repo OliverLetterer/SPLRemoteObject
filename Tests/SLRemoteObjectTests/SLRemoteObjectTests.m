@@ -34,72 +34,131 @@
 
 @protocol SampleProtocol <NSObject>
 
-@required
-- (NSString *)sayHello;
+- (void)performActionWithCompletionHandler:(void(^)(NSError *error))completionHandler;
+- (void)performAction:(NSString *)action withCompletionHandler:(void(^)(NSError *error))completionHandler;
 
-@optional
-- (void)sayHelloWithCompletionHandler:(void(^)(NSString *response, NSError *error))completionHandler;
+- (void)sayHelloWithResultsCompletionHandler:(void(^)(NSString *response, NSError *error))completionHandler;
+- (void)sayHelloForAction:(NSString *)action withResultsCompletionHandler:(void(^)(NSString *response, NSError *error))completionHandler;
 
 @end
 
 
 
-@interface SPLRemoteObjectProxyTestTarget : NSObject<SampleProtocol> @end
+@interface SPLRemoteObjectProxyTestTarget : NSObject<SampleProtocol>
+@property (nonatomic, copy) NSString *action;
+@end
 
 @implementation SPLRemoteObjectProxyTestTarget
 
-- (NSString *)sayHello
+- (void)sayHelloWithResultsCompletionHandler:(void (^)(NSString *, NSError *))completionHandler
 {
-    return @"hey there sexy.";
+    completionHandler(@"hey there sexy.", nil);
+}
+
+- (void)sayHelloForAction:(NSString *)action withResultsCompletionHandler:(void(^)(NSString *response, NSError *error))completionHandler
+{
+    self.action = action;
+    completionHandler(@"hey there sexy.", nil);
+}
+
+- (void)performActionWithCompletionHandler:(void(^)(NSError *error))completionHandler
+{
+    completionHandler(nil);
+}
+
+- (void)performAction:(NSString *)action withCompletionHandler:(void (^)(NSError *))completionHandler
+{
+    self.action = action;
+    completionHandler(nil);
 }
 
 @end
 
 
 
-@interface SPLRemoteObjectTests : XCTestCase {
-    SPLRemoteObjectProxyTestTarget *_target;
-    SPLRemoteObjectProxy *_proxy;
-    id<SampleProtocol> _remoteObject;
-}
+@interface SPLRemoteObjectTest : XCTestCase
+
+@property (nonatomic, strong) SPLRemoteObjectProxyTestTarget *target;
+@property (nonatomic, strong) SPLRemoteObjectProxy *proxy;
+@property (nonatomic, strong) id<SampleProtocol> remoteObject;
 
 @end
 
 
 
-@implementation SPLRemoteObjectTests
+@implementation SPLRemoteObjectTest
 
 - (void)setUp
 {
     [super setUp];
+
+    static NSInteger testCounter = 0;
+    testCounter++;
+
+    NSString *serviceName = [NSString stringWithFormat:@"testService%ld", (long)testCounter];
+
+    [Expecta setAsynchronousTestTimeout:10.0];
     
-    _target = [SPLRemoteObjectProxyTestTarget new];
-    _proxy = [[SPLRemoteObjectProxy alloc] initWithServiceName:@"someServiceName" target:_target protocol:@protocol(SampleProtocol) options:nil completionHandler:^(NSError *error) {
+    self.target = [SPLRemoteObjectProxyTestTarget new];
+    self.proxy = [[SPLRemoteObjectProxy alloc] initWithServiceName:serviceName target:_target protocol:@protocol(SampleProtocol) options:nil completionHandler:^(NSError *error) {
         
     }];
-    _remoteObject = [SPLRemoteObject remoteObjectWithServiceName:@"someServiceName" protocol:@protocol(SampleProtocol) options:nil];
+    self.remoteObject = [SPLRemoteObject remoteObjectWithServiceName:serviceName protocol:@protocol(SampleProtocol) options:nil];
 }
 
 - (void)tearDown
 {
     [super tearDown];
     
-    _target = nil;
-    _proxy = nil;
-    _remoteObject = nil;
+    self.target = nil;
+    self.proxy = nil;
+    self.remoteObject = nil;
 }
 
-- (void)testThatSPLRemoteObjectSendMessageToAnSPLRemoteObjectProxyAndReceivesAResponse
+- (void)testInvocationWithResult
 {
-    [Expecta setAsynchronousTestTimeout:5.0];
-    
     __block NSString *response = nil;
-    
-    [_remoteObject sayHelloWithCompletionHandler:^(NSString *responseeeee, NSError *error) {
+
+    [_remoteObject sayHelloWithResultsCompletionHandler:^(NSString *responseeeee, NSError *error) {
         response = responseeeee;
     }];
-    
+
     expect(response).will.equal(@"hey there sexy.");
+}
+
+- (void)testInvocationWithResultAndArguments
+{
+    __block NSString *response = nil;
+
+    [_remoteObject sayHelloForAction:@"action" withResultsCompletionHandler:^(NSString *responseeeee, NSError *error) {
+        response = responseeeee;
+    }];
+
+    expect(response).will.equal(@"hey there sexy.");
+    expect(self.target.action).to.equal(@"action");
+}
+
+- (void)testInvocationWithoutResult
+{
+    __block BOOL called = NO;
+
+    [_remoteObject performActionWithCompletionHandler:^(NSError *error) {
+        called = YES;
+    }];
+
+    expect(called).will.beTruthy();
+}
+
+- (void)testInvocationWithoutResultButArguments
+{
+    __block BOOL called = NO;
+
+    [_remoteObject performAction:@"action" withCompletionHandler:^(NSError *error) {
+        called = YES;
+    }];
+
+    expect(called).will.beTruthy();
+    expect(self.target.action).to.equal(@"action");
 }
 
 @end

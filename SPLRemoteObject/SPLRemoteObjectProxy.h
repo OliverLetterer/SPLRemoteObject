@@ -37,8 +37,6 @@
 @property (nonatomic, weak) id target;
 @property (nonatomic, readonly) NSString *serviceName;
 
-@property (nonatomic, assign) BOOL triesToInvokeAsynchronMethodImplementation;
-
 @property (nonatomic, readonly) SPLRemoteObjectEncryption encryptionType;
 @property (nonatomic, readonly) NSData *symmetricKey;
 @property (nonatomic, readonly) SPLRemoteObjectDataEncryptionBlock encryptionBlock;

@@ -28,6 +28,5 @@
 
 + (NSInvocation *)invocationWithRemoteObjectDictionaryRepresentation:(NSDictionary *)dictionaryRepresentation forProtocol:(Protocol *)protocol;
 - (NSDictionary *)remoteObjectDictionaryRepresentationForProtocol:(Protocol *)protocol;
-- (NSInvocation *)asynchronInvocationForProtocol:(Protocol *)protocol;
 
 @end
