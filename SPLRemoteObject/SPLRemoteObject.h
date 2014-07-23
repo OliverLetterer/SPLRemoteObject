@@ -34,18 +34,16 @@
  */
 @interface SPLRemoteObject : NSObject
 
-@property (nonatomic, assign) CFTimeInterval timeoutInterval;
-@property (nonatomic, readonly) NSString *serviceName;
+@property (nonatomic, readonly) NSString *name;
+@property (nonatomic, readonly) NSString *type;
+@property (nonatomic, readonly) Protocol *protocol;
 
+@property (nonatomic, assign) NSTimeInterval timeoutInterval;
 @property (strong) id<SPLRemoteObjectEncryptionPolicy> encryptionPolicy;
-
 @property (nonatomic, readonly) SPLRemoteObjectReachabilityStatus reachabilityStatus;
 
 @property (nonatomic, copy, readonly) NSDictionary *userInfo;
 
-/**
- See SPLRemoteObjectBase for available options
- */
-- (id)initWithServiceName:(NSString *)serviceName protocol:(Protocol *)protocol;
+- (instancetype)initWithName:(NSString *)name type:(NSString *)type protocol:(Protocol *)protocol;
 
 @end

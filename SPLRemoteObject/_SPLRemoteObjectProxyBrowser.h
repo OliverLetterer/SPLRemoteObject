@@ -26,12 +26,6 @@
 
 @class _SPLRemoteObjectProxyBrowser;
 
-@protocol _SPLRemoteObjectProxyBrowserDelegate <NSObject>
-
-- (void)remoteObjectHostBrowserDidChangeNumberOfResolvedNetServices:(_SPLRemoteObjectProxyBrowser *)remoteObjectHostBrowser;
-
-@end
-
 
 
 /**
@@ -41,11 +35,12 @@
 
 @property (nonatomic, copy, readonly) NSDictionary *userInfo;
 
-@property (nonatomic, readonly) NSString *serviceType;
-@property (nonatomic, readonly) NSArray *resolvedNetServices;
-@property (nonatomic, weak) id<_SPLRemoteObjectProxyBrowserDelegate> delegate;
+@property (nonatomic, readonly) NSString *name;
+@property (nonatomic, readonly) NSString *netServiceType;
 
-- (id)initWithServiceType:(NSString *)serviceType;
+@property (nonatomic, readonly) NSNetService *resolvedNetService;
+
+- (instancetype)initWithName:(NSString *)name netServiceType:(NSString *)netServiceType;
 
 @property (nonatomic, readonly) BOOL isDiscoveringRemoteObjectHosts;
 

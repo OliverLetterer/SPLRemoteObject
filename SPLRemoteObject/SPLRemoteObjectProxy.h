@@ -35,13 +35,16 @@
  */
 @interface SPLRemoteObjectProxy : NSObject
 
+@property (nonatomic, readonly) NSString *name;
+@property (nonatomic, readonly) NSString *type;
+
 @property (nonatomic, weak) id target;
-@property (nonatomic, readonly) NSString *serviceName;
+@property (nonatomic, readonly) Protocol *protocol;
 
 @property (strong) id<SPLRemoteObjectEncryptionPolicy> encryptionPolicy;
 
 @property (nonatomic, copy) NSDictionary *userInfo;
 
-- (id)initWithServiceName:(NSString *)serviceName target:(id)target protocol:(Protocol *)protocol completionHandler:(SPLRemoteObjectErrorBlock)completionHandler;
+- (instancetype)initWithName:(NSString *)name type:(NSString *)type protocol:(Protocol *)protocol target:(id)target completionHandler:(SPLRemoteObjectErrorBlock)completionHandler;
 
 @end

@@ -124,15 +124,14 @@
     static NSInteger testCounter = 0;
     testCounter++;
 
-    NSString *serviceName = [NSString stringWithFormat:@"testService%ld", (long)testCounter];
-
-    [Expecta setAsynchronousTestTimeout:10.0];
+    NSString *type = [NSString stringWithFormat:@"testService%ld", (long)testCounter];
+    [Expecta setAsynchronousTestTimeout:60.0];
     
-    self.target = [SPLRemoteObjectProxyTestTarget new];
-    self.proxy = [[SPLRemoteObjectProxy alloc] initWithServiceName:serviceName target:_target protocol:@protocol(SampleProtocol) completionHandler:^(NSError *error) {
+    self.target = [[SPLRemoteObjectProxyTestTarget alloc] init];
+    self.proxy = [[SPLRemoteObjectProxy alloc] initWithName:@"object" type:type protocol:@protocol(SampleProtocol) target:self.target completionHandler:^(NSError *error) {
         
     }];
-    self.remoteObject = (id)[[SPLRemoteObject alloc] initWithServiceName:serviceName protocol:@protocol(SampleProtocol)];
+    self.remoteObject = (id)[[SPLRemoteObject alloc] initWithName:@"object" type:type protocol:@protocol(SampleProtocol)];
 }
 
 - (void)tearDown

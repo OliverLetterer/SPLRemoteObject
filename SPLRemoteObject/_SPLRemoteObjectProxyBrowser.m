@@ -30,11 +30,11 @@
 
 
 
-@interface _SPLRemoteObjectProxyBrowser () <NSNetServiceBrowserDelegate, NSNetServiceDelegate> {
-    NSNetServiceBrowser *_netServiceBrowser;
-    NSMutableArray *_resolvedNetServices;
-    NSMutableArray *_discoveringNetServices;
-}
+@interface _SPLRemoteObjectProxyBrowser () <NSNetServiceBrowserDelegate, NSNetServiceDelegate>
+
+@property (nonatomic, strong) NSNetService *resolvedNetService;
+@property (nonatomic, strong) NSNetService *discoveringNetService;
+@property (nonatomic, strong) NSNetServiceBrowser *netServiceBrowser;
 
 + (NSDictionary *)userInfoFromTXTRecordData:(NSData *)txtData;
 @property (nonatomic, copy) NSDictionary *userInfo;
@@ -62,14 +62,12 @@
 
 #pragma mark - Initialization
 
-- (id)initWithServiceType:(NSString *)serviceType
+- (instancetype)initWithName:(NSString *)name netServiceType:(NSString *)netServiceType
 {
     if (self = [super init]) {
-        _serviceType = serviceType;
-        
-        _resolvedNetServices = [NSMutableArray array];
-        _discoveringNetServices = [NSMutableArray array];
-        
+        _name = name;
+        _netServiceType = netServiceType;
+
         _netServiceBrowser = [[NSNetServiceBrowser alloc] init];
         _netServiceBrowser.delegate = self;
         [_netServiceBrowser scheduleInRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
@@ -85,7 +83,7 @@
 - (void)startDiscoveringRemoteObjectHosts
 {
     _isDiscoveringRemoteObjectHosts = YES;
-    [_netServiceBrowser searchForServicesOfType:_serviceType inDomain:@""];
+    [_netServiceBrowser searchForServicesOfType:self.netServiceType inDomain:@""];
 }
 
 - (void)stopDiscoveringRemoteObjectHosts
@@ -99,15 +97,15 @@
 - (void)_applicationWillEnterForegroundCallback:(NSNotification *)notification
 {
     if (_isDiscoveringRemoteObjectHosts) {
-        [_netServiceBrowser searchForServicesOfType:_serviceType inDomain:@""];
+        [_netServiceBrowser searchForServicesOfType:self.netServiceType inDomain:@""];
     }
 }
 
 - (void)_applicationDidEnterBackgroundCallback:(NSNotification *)notification
 {
     [_netServiceBrowser stop];
-    [_discoveringNetServices removeAllObjects];
-    [_resolvedNetServices removeAllObjects];
+    self.discoveringNetService = nil;
+    self.discoveringNetService = nil;
 }
 
 #pragma mark - Memory management
@@ -123,18 +121,16 @@
 
 - (void)netServiceDidResolveAddress:(NSNetService *)sender
 {
-    [_discoveringNetServices removeObject:sender];
-    if (![_resolvedNetServices containsObject:sender]) {
-        [_resolvedNetServices addObject:sender];
+    if (sender == self.discoveringNetService) {
+        self.discoveringNetService = nil;
+        self.resolvedNetService = sender;
     }
-    
-    [_delegate remoteObjectHostBrowserDidChangeNumberOfResolvedNetServices:self];
 }
 
 - (void)netService:(NSNetService *)sender didNotResolve:(NSDictionary *)errorDict
 {
-    [_discoveringNetServices removeObject:sender];
-    [_resolvedNetServices removeObject:sender];
+    self.discoveringNetService = nil;
+    self.resolvedNetService = nil;
 }
 
 - (void)netService:(NSNetService *)sender didUpdateTXTRecordData:(NSData *)data
@@ -146,28 +142,31 @@
 
 - (void)netServiceBrowser:(NSNetServiceBrowser *)netServiceBrowser didFindService:(NSNetService *)netService moreComing:(BOOL)moreComing
 {
-    [netService startMonitoring];
-    
+    if (![netService.name isEqual:self.name]) {
+        return;
+    }
+
     if (netService.hostName && netService.port >= 0) {
-        self.userInfo = [_SPLRemoteObjectProxyBrowser userInfoFromTXTRecordData:netService.TXTRecordData];
-        
-        [_resolvedNetServices addObject:netService];
-        [_delegate remoteObjectHostBrowserDidChangeNumberOfResolvedNetServices:self];
+        self.resolvedNetService = netService;
     } else {
-        [_discoveringNetServices addObject:netService];
+        self.discoveringNetService = netService;
         netService.delegate = self;
         [netService scheduleInRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
         [netService resolveWithTimeout:10.0];
-
-        self.userInfo = [_SPLRemoteObjectProxyBrowser userInfoFromTXTRecordData:netService.TXTRecordData];
     }
+
+    self.userInfo = [_SPLRemoteObjectProxyBrowser userInfoFromTXTRecordData:netService.TXTRecordData];
+    [netService startMonitoring];
 }
 
 - (void)netServiceBrowser:(NSNetServiceBrowser *)netServiceBrowser didRemoveService:(NSNetService *)netService moreComing:(BOOL)moreComing
 {
-    [_discoveringNetServices removeObject:netService];
-    [_resolvedNetServices removeObject:netService];
-    [_delegate remoteObjectHostBrowserDidChangeNumberOfResolvedNetServices:self];
+    if (![netService.name isEqual:self.name]) {
+        return;
+    }
+
+    self.discoveringNetService = nil;
+    self.resolvedNetService = nil;
 }
 
 #pragma mark - Private category implementation ()
