@@ -25,6 +25,7 @@
 //
 
 #import "SPLRemoteObjectBase.h"
+#import "SPLRemoteObjectEncryptionPolicy.h"
 
 
 
@@ -36,20 +37,15 @@
 @property (nonatomic, assign) CFTimeInterval timeoutInterval;
 @property (nonatomic, readonly) NSString *serviceName;
 
-@property (nonatomic, copy, readonly) NSDictionary *userInfo;
-
-@property (nonatomic, readonly) SPLRemoteObjectEncryption encryptionType;
-@property (nonatomic, readonly) NSData *symmetricKey;
-@property (nonatomic, readonly) SPLRemoteObjectDataEncryptionBlock encryptionBlock;
-@property (nonatomic, readonly) SPLRemoteObjectDataDecryptionBlock decryptionBlock;
-
-@property (nonatomic, readonly) NSString *peerDomainName;
+@property (strong) id<SPLRemoteObjectEncryptionPolicy> encryptionPolicy;
 
 @property (nonatomic, readonly) SPLRemoteObjectReachabilityStatus reachabilityStatus;
+
+@property (nonatomic, copy, readonly) NSDictionary *userInfo;
 
 /**
  See SPLRemoteObjectBase for available options
  */
-+ (id)remoteObjectWithServiceName:(NSString *)serviceName protocol:(Protocol *)protocol options:(NSDictionary *)options;
+- (id)initWithServiceName:(NSString *)serviceName protocol:(Protocol *)protocol;
 
 @end

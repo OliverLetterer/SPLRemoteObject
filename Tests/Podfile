@@ -1,10 +1,11 @@
-xcodeproj 'SPLRemoteObject'
+xcodeproj 'SLRemoteObject'
 workspace '../SPLRemoteObject'
 inhibit_all_warnings!
 
 platform :ios, '7.0'
-link_with 'SPLRemoteObjectTests'
+link_with 'SLRemoteObjectTests'
 
 pod 'OCMock'
 pod 'Expecta'
 pod 'SPLRemoteObject', :path => '..'
+pod 'CTOpenSSLWrapper', '~> 1.2.1'

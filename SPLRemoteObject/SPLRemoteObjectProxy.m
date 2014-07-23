@@ -97,19 +97,6 @@ void SPLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBa
     }
 }
 
-- (void)setIdentity:(SecIdentityRef)identity
-{
-    if (identity != _identity) {
-        if (_identity != NULL) {
-            CFRelease(_identity), _identity = NULL;
-        }
-
-        if (identity) {
-            _identity = (SecIdentityRef)CFRetain(identity);
-        }
-    }
-}
-
 - (void)setSocket:(CFSocketRef)socket
 {
     if (socket != _socket) {
@@ -130,7 +117,7 @@ void SPLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBa
 
 #pragma mark - Initialization
 
-- (id)initWithServiceName:(NSString *)serviceName target:(id)target protocol:(Protocol *)protocol options:(NSDictionary *)options completionHandler:(SPLRemoteObjectErrorBlock)completionHandler
+- (id)initWithServiceName:(NSString *)serviceName target:(id)target protocol:(Protocol *)protocol completionHandler:(SPLRemoteObjectErrorBlock)completionHandler
 {
     if (self = [super init]) {
         _completionHandler = [completionHandler copy];
@@ -138,25 +125,6 @@ void SPLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBa
         _serviceName = serviceName;
         _target = target;
         _protocol = protocol;
-
-        _encryptionType = [options[SPLRemoteObjectEncryptionType] unsignedIntegerValue];
-
-        if (_encryptionType & SPLRemoteObjectEncryptionSymmetric) {
-            _encryptionBlock = options[SPLRemoteObjectSymmetricEncryptionBlock];
-            _decryptionBlock = options[SPLRemoteObjectSymmetricDecryptionBlock];
-            _symmetricKey = options[SPLRemoteObjectSymmetricKey];
-
-            NSAssert(_encryptionBlock, @"No encryption block found in SPLRemoteObjectSymmetricEncryptionBlock");
-            NSAssert(_decryptionBlock, @"No decryption block found in SPLRemoteObjectSymmetricDecryptionBlock");
-            NSAssert(_symmetricKey, @"No symmetric key found in SPLRemoteObjectSymmetricKey");
-        }
-
-        if (_encryptionType & SPLRemoteObjectEncryptionSSL) {
-            SecIdentityRef identity = (__bridge SecIdentityRef)options[SPLRemoteObjectSSLSecIdentityRef];
-            NSAssert(identity, @"No identity found in SPLRemoteObjectSSLSecIdentityRef");
-
-            _identity = (SecIdentityRef)CFRetain(identity);
-        }
 
         NSAssert([_target conformsToProtocol:protocol], @"%@ does not conform to protocol %s", target, protocol_getName(protocol));
 
@@ -176,10 +144,6 @@ void SPLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBa
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 
     [self stopServer];
-
-    if (_identity) {
-        CFRelease(_identity), _identity = NULL;
-    }
 }
 
 #pragma mark - NSNotificationCenter
@@ -289,8 +253,8 @@ void SPLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBa
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
         NSData *dataPackage = receivedDataPackage;
         @try {
-            if (_encryptionType & SPLRemoteObjectEncryptionSymmetric) {
-                dataPackage = _decryptionBlock(dataPackage, _symmetricKey);
+            if (self.encryptionPolicy) {
+                dataPackage = [self.encryptionPolicy dataByDescryptingData:dataPackage];
             }
 
             NSDictionary *dictionary = [NSKeyedUnarchiver unarchiveObjectWithData:dataPackage];
@@ -300,8 +264,8 @@ void SPLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBa
             void(^sendIncompatibleResponse)(void) = ^{
                 NSData *responseData = responseData = [NSKeyedArchiver archivedDataWithRootObject:[[_SPLIncompatibleResponse alloc] init]];
 
-                if (_encryptionType & SPLRemoteObjectEncryptionSymmetric) {
-                    responseData = _encryptionBlock(responseData, _symmetricKey);
+                if (self.encryptionPolicy) {
+                    responseData = [self.encryptionPolicy dataByEncryptingData:responseData];
                 }
 
                 dispatch_async(dispatch_get_main_queue(), ^{
@@ -329,8 +293,8 @@ void SPLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBa
                             responseData = [NSKeyedArchiver archivedDataWithRootObject:returnObject];
                         }
 
-                        if (_encryptionType & SPLRemoteObjectEncryptionSymmetric) {
-                            responseData = _encryptionBlock(responseData, _symmetricKey);
+                        if (self.encryptionPolicy) {
+                            responseData = [self.encryptionPolicy dataByEncryptingData:responseData];
                         }
 
                         dispatch_async(dispatch_get_main_queue(), ^{
@@ -377,11 +341,6 @@ void SPLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBa
 {
     _SPLRemoteObjectNativeSocketConnection *connection = [[_SPLRemoteObjectNativeSocketConnection alloc] initWithNativeSocketHandle:nativeSocketHandle];
     connection.delegate = self;
-
-    if (self.encryptionType & SPLRemoteObjectEncryptionSSL) {
-        connection.SSLEnabled = YES;
-        connection.identity = self.identity;
-    }
 
     [_openConnections addObject:connection];
     [connection connect];

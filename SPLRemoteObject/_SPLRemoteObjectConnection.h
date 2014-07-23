@@ -49,18 +49,6 @@
 
 @property (nonatomic, weak) id<_SPLRemoteObjectConnectionDelegate> delegate;
 
-@property (nonatomic, assign) BOOL SSLEnabled;
-
-/**
- optional for client connections, can only accept connection to peer with valid domain name
- */
-@property (nonatomic, strong) NSString *peerDomainName;
-
-/**
- required for server connections
- */
-@property (nonatomic, assign) SecIdentityRef identity;
-
 @property (nonatomic, readonly) BOOL isConnected;
 
 - (void)connect;

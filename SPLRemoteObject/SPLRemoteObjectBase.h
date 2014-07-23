@@ -49,33 +49,6 @@ extern NSString *const SPLRemoteObjectNetworkOperationDidEndNotification;
 
 
 /**
- SPLRemoteObject options
- */
-extern NSString *const SPLRemoteObjectEncryptionType;
-
-typedef NS_OPTIONS(NSUInteger, SPLRemoteObjectEncryption) {
-    SPLRemoteObjectEncryptionNone         = 0,
-    SPLRemoteObjectEncryptionSymmetric    = 1,
-    SPLRemoteObjectEncryptionSSL          = 2
-};
-
-/**
- symmetric encryption
- */
-extern NSString *const SPLRemoteObjectSymmetricKey;
-extern NSString *const SPLRemoteObjectSymmetricEncryptionBlock;
-extern NSString *const SPLRemoteObjectSymmetricDecryptionBlock;
-
-
-/**
- SSL options
- */
-extern NSString *const SPLRemoteObjectSSLSecIdentityRef;
-extern NSString *const SPLRemoteObjectSSLPeerDomainName;
-
-
-
-/**
  SPLRemoteObject errors
  */
 extern NSString *const SPLRemoteObjectErrorDomain;

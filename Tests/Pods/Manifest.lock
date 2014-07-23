@@ -1,11 +1,15 @@
 PODS:
+  - CTOpenSSLWrapper (1.2.1):
+    - OpenSSL-Universal (= 1.0.1.h)
   - Expecta (0.3.1)
   - OCMock (3.0.2)
+  - OpenSSL-Universal (1.0.1.h)
   - SLObjectiveCRuntimeAdditions (1.1.4)
   - SPLRemoteObject (2.0.0):
     - SLObjectiveCRuntimeAdditions (>= 1.0.0)
 
 DEPENDENCIES:
+  - CTOpenSSLWrapper (~> 1.2.1)
   - Expecta
   - OCMock
   - SPLRemoteObject (from `..`)
@@ -15,8 +19,10 @@ EXTERNAL SOURCES:
     :path: ..
 
 SPEC CHECKSUMS:
+  CTOpenSSLWrapper: 51c8d1e9f238da4a54edf7182ea6122e50450f5a
   Expecta: 03aabd0a89d8dea843baecb19a7fd7466a69a31d
   OCMock: b9836ab89d8d5e66cbe6333f93857037c310ee62
+  OpenSSL-Universal: 9c112508615ed33bb35f730eed820e93175a9dec
   SLObjectiveCRuntimeAdditions: 53a3d05059b6b30fffcd91c62fe676ae969e1c71
   SPLRemoteObject: 3d495e69600391131c680e5c1679ddf5ab9b72d3
 

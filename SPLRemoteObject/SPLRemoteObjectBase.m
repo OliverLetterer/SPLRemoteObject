@@ -30,13 +30,3 @@ NSString *const SPLRemoteObjectNetworkOperationDidStartNotification = @"SPLRemot
 NSString *const SPLRemoteObjectNetworkOperationDidEndNotification = @"SPLRemoteObjectNetworkOperationDidEndNotification";
 
 NSString *const SPLRemoteObjectErrorDomain = @"SPLRemoteObjectErrorDomain";
-
-NSString *const SPLRemoteObjectEncryptionType = @"SPLRemoteObjectEncryptionType";
-
-NSString *const SPLRemoteObjectOptionEncryption = @"SPLRemoteObjectOptionEncryption";
-NSString *const SPLRemoteObjectSSLSecIdentityRef = @"SPLRemoteObjectSSLSecIdentityRef";
-NSString *const SPLRemoteObjectSSLPeerDomainName = @"SPLRemoteObjectSSLPeerDomainName";
-
-NSString *const SPLRemoteObjectSymmetricKey = @"SPLRemoteObjectSymmetricKey";
-NSString *const SPLRemoteObjectSymmetricEncryptionBlock = @"SPLRemoteObjectSymmetricEncryptionBlock";
-NSString *const SPLRemoteObjectSymmetricDecryptionBlock = @"SPLRemoteObjectSymmetricDecryptionBlock";

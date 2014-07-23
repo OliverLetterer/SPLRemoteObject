@@ -26,6 +26,7 @@
 
 #import <Security/Security.h>
 #import "SPLRemoteObjectBase.h"
+#import "SPLRemoteObjectEncryptionPolicy.h"
 
 
 
@@ -37,14 +38,10 @@
 @property (nonatomic, weak) id target;
 @property (nonatomic, readonly) NSString *serviceName;
 
-@property (nonatomic, readonly) SPLRemoteObjectEncryption encryptionType;
-@property (nonatomic, readonly) NSData *symmetricKey;
-@property (nonatomic, readonly) SPLRemoteObjectDataEncryptionBlock encryptionBlock;
-@property (nonatomic, readonly) SPLRemoteObjectDataDecryptionBlock decryptionBlock;
-@property (nonatomic, readonly) SecIdentityRef identity;
+@property (strong) id<SPLRemoteObjectEncryptionPolicy> encryptionPolicy;
 
 @property (nonatomic, copy) NSDictionary *userInfo;
 
-- (id)initWithServiceName:(NSString *)serviceName target:(id)target protocol:(Protocol *)protocol options:(NSDictionary *)options completionHandler:(SPLRemoteObjectErrorBlock)completionHandler;
+- (id)initWithServiceName:(NSString *)serviceName target:(id)target protocol:(Protocol *)protocol completionHandler:(SPLRemoteObjectErrorBlock)completionHandler;
 
 @end

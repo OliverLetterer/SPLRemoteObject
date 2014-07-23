@@ -104,12 +104,7 @@ static void * SPLRemoteObjectUserInfoObserver = &SPLRemoteObjectUserInfoObserver
 
 #pragma mark - Initialization
 
-+ (id)remoteObjectWithServiceName:(NSString *)serviceName protocol:(Protocol *)protocol options:(NSDictionary *)options
-{
-    return [[SPLRemoteObject alloc] initWithServiceName:serviceName protocol:protocol options:options];
-}
-
-- (id)initWithServiceName:(NSString *)serviceName protocol:(Protocol *)protocol options:(NSDictionary *)options
+- (instancetype)initWithServiceName:(NSString *)serviceName protocol:(Protocol *)protocol
 {
     NSParameterAssert(protocol);
     NSParameterAssert(serviceName);
@@ -117,22 +112,6 @@ static void * SPLRemoteObjectUserInfoObserver = &SPLRemoteObjectUserInfoObserver
     if (self = [super init]) {
         _protocol = protocol;
         _serviceName = serviceName;
-
-        _encryptionType = [options[SPLRemoteObjectEncryptionType] unsignedIntegerValue];
-
-        if (_encryptionType & SPLRemoteObjectEncryptionSymmetric) {
-            _encryptionBlock = options[SPLRemoteObjectSymmetricEncryptionBlock];
-            _decryptionBlock = options[SPLRemoteObjectSymmetricDecryptionBlock];
-            _symmetricKey = options[SPLRemoteObjectSymmetricKey];
-
-            NSAssert(_encryptionBlock, @"No encryption block found in SPLRemoteObjectSymmetricEncryptionBlock");
-            NSAssert(_decryptionBlock, @"No decryption block found in SPLRemoteObjectSymmetricDecryptionBlock");
-            NSAssert(_symmetricKey, @"No symmetric key found in SPLRemoteObjectSymmetricKey");
-        }
-
-        if (_encryptionType & SPLRemoteObjectEncryptionSSL) {
-            _peerDomainName = options[SPLRemoteObjectSSLPeerDomainName];
-        }
 
         _activeConnection = [NSMutableArray array];
         _queuedConnections = [NSMutableArray array];
@@ -264,8 +243,8 @@ static void * SPLRemoteObjectUserInfoObserver = &SPLRemoteObjectUserInfoObserver
             @try {
                 NSData *thisDataPackage = dataPackage;
 
-                if (_encryptionType & SPLRemoteObjectEncryptionSymmetric) {
-                    thisDataPackage = _decryptionBlock(thisDataPackage, _symmetricKey);
+                if (self.encryptionPolicy) {
+                    thisDataPackage = [self.encryptionPolicy dataByDescryptingData:thisDataPackage];
                 }
                 id object = thisDataPackage.length > 0 ? [NSKeyedUnarchiver unarchiveObjectWithData:thisDataPackage] : nil;
 
@@ -336,11 +315,6 @@ static void * SPLRemoteObjectUserInfoObserver = &SPLRemoteObjectUserInfoObserver
                 connection.remoteMethodSignature = queuedConnection.remoteMethodSignature;
                 connection.shouldRetryIfConnectionFails = queuedConnection.shouldRetryIfConnectionFails;
                 objc_setAssociatedObject(connection, &SPLRemoteObjectInvocationKey, invocation, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-
-                if (self.encryptionType & SPLRemoteObjectEncryptionSSL) {
-                    connection.SSLEnabled = YES;
-                    connection.peerDomainName = self.peerDomainName;
-                }
 
                 [_activeConnection addObject:connection];
 
@@ -484,8 +458,8 @@ static void * SPLRemoteObjectUserInfoObserver = &SPLRemoteObjectUserInfoObserver
         __block NSData *dataPackage = [NSKeyedArchiver archivedDataWithRootObject:dictionary];
 
         dispatch_async(dispatch_get_main_queue(), ^{
-            if (_encryptionType & SPLRemoteObjectEncryptionSymmetric) {
-                dataPackage = _encryptionBlock(dataPackage, _symmetricKey);
+            if (self.encryptionPolicy) {
+                dataPackage = [self.encryptionPolicy dataByEncryptingData:dataPackage];
             }
 
             if (_hostBrowser.resolvedNetServices.count == 0) {
@@ -525,11 +499,6 @@ static void * SPLRemoteObjectUserInfoObserver = &SPLRemoteObjectUserInfoObserver
                     connection.remoteMethodSignature = methodSignature;
                     connection.shouldRetryIfConnectionFails = YES;
                     objc_setAssociatedObject(connection, &SPLRemoteObjectInvocationKey, anInvocation, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-
-                    if (self.encryptionType & SPLRemoteObjectEncryptionSSL) {
-                        connection.SSLEnabled = YES;
-                        connection.peerDomainName = self.peerDomainName;
-                    }
 
                     [_activeConnection addObject:connection];
 

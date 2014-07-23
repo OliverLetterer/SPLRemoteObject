@@ -26,6 +26,7 @@
 
 #import <XCTest/XCTest.h>
 #import <Foundation/Foundation.h>
+#import <CTOpenSSLWrapper.h>
 #import "SPLRemoteObjectProxy.h"
 #import "SPLRemoteObject.h"
 #define EXP_SHORTHAND YES
@@ -74,13 +75,41 @@
 
 @end
 
+@interface SPLRemoteObjectTestEncryptionPolicy : NSObject<SPLRemoteObjectEncryptionPolicy>
+
+@property (nonatomic, strong) NSString *key;
+
+@end
+
+@implementation SPLRemoteObjectTestEncryptionPolicy
+
+- (NSData *)dataByEncryptingData:(NSData *)data
+{
+    NSData *newData = nil;
+    BOOL success = CTOpenSSLSymmetricEncrypt(CTOpenSSLCipherAES256, [self.key dataUsingEncoding:NSUTF8StringEncoding], data, &newData);
+    NSParameterAssert(success);
+
+    return newData;
+}
+
+- (NSData *)dataByDescryptingData:(NSData *)data
+{
+    NSData *newData = nil;
+    BOOL success = CTOpenSSLSymmetricDecrypt(CTOpenSSLCipherAES256, [self.key dataUsingEncoding:NSUTF8StringEncoding], data, &newData);
+    NSParameterAssert(success);
+
+    return newData;
+}
+
+@end
+
 
 
 @interface SPLRemoteObjectTest : XCTestCase
 
 @property (nonatomic, strong) SPLRemoteObjectProxyTestTarget *target;
 @property (nonatomic, strong) SPLRemoteObjectProxy *proxy;
-@property (nonatomic, strong) id<SampleProtocol> remoteObject;
+@property (nonatomic, strong) SPLRemoteObject<SampleProtocol> *remoteObject;
 
 @end
 
@@ -100,10 +129,10 @@
     [Expecta setAsynchronousTestTimeout:10.0];
     
     self.target = [SPLRemoteObjectProxyTestTarget new];
-    self.proxy = [[SPLRemoteObjectProxy alloc] initWithServiceName:serviceName target:_target protocol:@protocol(SampleProtocol) options:nil completionHandler:^(NSError *error) {
+    self.proxy = [[SPLRemoteObjectProxy alloc] initWithServiceName:serviceName target:_target protocol:@protocol(SampleProtocol) completionHandler:^(NSError *error) {
         
     }];
-    self.remoteObject = [SPLRemoteObject remoteObjectWithServiceName:serviceName protocol:@protocol(SampleProtocol) options:nil];
+    self.remoteObject = (id)[[SPLRemoteObject alloc] initWithServiceName:serviceName protocol:@protocol(SampleProtocol)];
 }
 
 - (void)tearDown
@@ -117,6 +146,23 @@
 
 - (void)testInvocationWithResult
 {
+    __block NSString *response = nil;
+
+    [_remoteObject sayHelloWithResultsCompletionHandler:^(NSString *responseeeee, NSError *error) {
+        response = responseeeee;
+    }];
+
+    expect(response).will.equal(@"hey there sexy.");
+}
+
+- (void)testInvocationWithResultAndEncryption
+{
+    SPLRemoteObjectTestEncryptionPolicy *policy = [[SPLRemoteObjectTestEncryptionPolicy alloc] init];
+    policy.key = @"Hallo";
+
+    self.remoteObject.encryptionPolicy = policy;
+    self.proxy.encryptionPolicy = policy;
+
     __block NSString *response = nil;
 
     [_remoteObject sayHelloWithResultsCompletionHandler:^(NSString *responseeeee, NSError *error) {

@@ -6,6 +6,12 @@
 // project.
 
 
+// CTOpenSSLWrapper
+#define COCOAPODS_POD_AVAILABLE_CTOpenSSLWrapper
+#define COCOAPODS_VERSION_MAJOR_CTOpenSSLWrapper 1
+#define COCOAPODS_VERSION_MINOR_CTOpenSSLWrapper 2
+#define COCOAPODS_VERSION_PATCH_CTOpenSSLWrapper 1
+
 // Expecta
 #define COCOAPODS_POD_AVAILABLE_Expecta
 #define COCOAPODS_VERSION_MAJOR_Expecta 0
@@ -17,6 +23,13 @@
 #define COCOAPODS_VERSION_MAJOR_OCMock 3
 #define COCOAPODS_VERSION_MINOR_OCMock 0
 #define COCOAPODS_VERSION_PATCH_OCMock 2
+
+// OpenSSL-Universal
+#define COCOAPODS_POD_AVAILABLE_OpenSSL_Universal
+// This library does not follow semantic-versioning,
+// so we were not able to define version macros.
+// Please contact the author.
+// Version: 1.0.1.h.
 
 // SLObjectiveCRuntimeAdditions
 #define COCOAPODS_POD_AVAILABLE_SLObjectiveCRuntimeAdditions
