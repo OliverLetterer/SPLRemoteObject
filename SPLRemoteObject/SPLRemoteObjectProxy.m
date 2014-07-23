@@ -25,6 +25,7 @@
 //
 
 #import "SPLRemoteObjectProxy.h"
+#import "NSString+SPLRemoteObject.h"
 #import "_SPLRemoteObjectNativeSocketConnection.h"
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -36,20 +37,7 @@
 #import "SPLRemoteObject.h"
 #import "_SPLIncompatibleResponse.h"
 #import <objc/runtime.h>
-#import <CommonCrypto/CommonDigest.h>
 
-static NSString *MD5(NSString *string)
-{
-    unsigned char md5Buffer[CC_MD5_DIGEST_LENGTH];
-    CC_MD5(string.UTF8String, strlen(string.UTF8String), md5Buffer);
-
-    NSMutableString *result = [NSMutableString stringWithCapacity:CC_MD5_DIGEST_LENGTH * 2];
-    for (int i = 0; i < CC_MD5_DIGEST_LENGTH; i++) {
-        [result appendFormat:@"%02x",md5Buffer[i]];
-    }
-    
-    return result;
-}
 
 
 void SPLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBackType type, CFDataRef address, const void *data, void *info);
@@ -64,7 +52,6 @@ void SPLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBa
 @property (nonatomic, assign) uint16_t port;
 @property (nonatomic, strong) NSNetService *netService;
 
-@property (nonatomic, readonly) NSString *netServiceType;
 @property (nonatomic, readonly) NSMutableArray *openConnections;
 
 @property (nonatomic, readonly) BOOL isServerRunning;
@@ -122,12 +109,6 @@ void SPLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBa
             _socket = (CFSocketRef)CFRetain(socket);
         }
     }
-}
-
-- (NSString *)netServiceType
-{
-    NSString *type = [NSString stringWithFormat:@"%@%s", self.type, protocol_getName(self.protocol)];
-    return [NSString stringWithFormat:@"_%@._tcp.", MD5(type)];
 }
 
 #pragma mark - Initialization
@@ -413,7 +394,7 @@ void SPLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBa
 
 - (void)_publishService
 {
-    _netService = [[NSNetService alloc] initWithDomain:@"" type:self.netServiceType name:self.name port:_port];
+    _netService = [[NSNetService alloc] initWithDomain:@"" type:[self.type netServiceTypeWithProtocol:self.protocol] name:self.name port:_port];
     [_netService scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
     _netService.delegate = self;
     if (self.userInfo) {

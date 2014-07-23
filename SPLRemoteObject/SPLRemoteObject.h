@@ -34,6 +34,8 @@
  */
 @interface SPLRemoteObject : NSObject
 
++ (NSDictionary *)userInfoFromTXTRecordData:(NSData *)txtData;
+
 @property (nonatomic, readonly) NSString *name;
 @property (nonatomic, readonly) NSString *type;
 @property (nonatomic, readonly) Protocol *protocol;
@@ -44,6 +46,7 @@
 
 @property (nonatomic, copy, readonly) NSDictionary *userInfo;
 
+- (instancetype)init UNAVAILABLE_ATTRIBUTE;
 - (instancetype)initWithName:(NSString *)name type:(NSString *)type protocol:(Protocol *)protocol;
 
 @end

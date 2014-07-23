@@ -25,6 +25,7 @@
 //
 
 #import "SPLRemoteObject.h"
+#import "NSString+SPLRemoteObject.h"
 #import "_SPLRemoteObjectProxyBrowser.h"
 #import "NSInvocation+SPLRemoteObject.h"
 #import "_SPLRemoteObjectHostConnection.h"
@@ -35,20 +36,8 @@
 #import <dns_sd.h>
 #import <net/if.h>
 #import <AssertMacros.h>
-#import <CommonCrypto/CommonDigest.h>
 
-static NSString *MD5(NSString *string)
-{
-    unsigned char md5Buffer[CC_MD5_DIGEST_LENGTH];
-    CC_MD5(string.UTF8String, strlen(string.UTF8String), md5Buffer);
 
-    NSMutableString *result = [NSMutableString stringWithCapacity:CC_MD5_DIGEST_LENGTH * 2];
-    for (int i = 0; i < CC_MD5_DIGEST_LENGTH; i++) {
-        [result appendFormat:@"%02x",md5Buffer[i]];
-    }
-
-    return result;
-}
 
 char * const SPLRemoteObjectInvocationKey;
 
@@ -88,18 +77,15 @@ static BOOL signatureMatches(const char *signature1, const char *signature2)
 
 static void * SPLRemoteObjectObserver = &SPLRemoteObjectObserver;
 
-@interface SPLRemoteObject () <_SPLRemoteObjectConnectionDelegate>
+@interface SPLRemoteObject () <_SPLRemoteObjectConnectionDelegate, NSNetServiceDelegate>
 
 @property (nonatomic, strong) _SPLRemoteObjectProxyBrowser *hostBrowser;
 
 @property (nonatomic, strong) NSMutableArray *activeConnection;
 @property (nonatomic, strong) NSMutableArray *queuedConnections;
 
-@property (nonatomic, readonly) NSString *netServiceType;
 @property (nonatomic, strong) NSNetService *netService;
 @property (nonatomic, copy) NSDictionary *userInfo;
-
-- (id)initWithServiceName:(NSString *)serviceName protocol:(Protocol *)protocol options:(NSDictionary *)options;
 
 @property (nonatomic, assign) SPLRemoteObjectReachabilityStatus reachabilityStatus;
 
@@ -108,6 +94,21 @@ static void * SPLRemoteObjectObserver = &SPLRemoteObjectObserver;
 
 
 @implementation SPLRemoteObject
+
++ (NSDictionary *)userInfoFromTXTRecordData:(NSData *)txtData
+{
+    NSDictionary *dictionary = [NSNetService dictionaryFromTXTRecordData:txtData];
+    NSMutableDictionary *userInfo = [NSMutableDictionary dictionary];
+
+    [dictionary enumerateKeysAndObjectsUsingBlock:^(NSString *key, NSData *data, BOOL *stop) {
+        id object = [NSKeyedUnarchiver unarchiveObjectWithData:data];
+        if (object) {
+            userInfo[key] = object;
+        }
+    }];
+
+    return [userInfo copy];
+}
 
 #pragma mark - setters and getters
 
@@ -144,13 +145,27 @@ static void * SPLRemoteObjectObserver = &SPLRemoteObjectObserver;
     }
 }
 
-- (NSString *)netServiceType
-{
-    NSString *type = [NSString stringWithFormat:@"%@%s", self.type, protocol_getName(self.protocol)];
-    return [NSString stringWithFormat:@"_%@._tcp.", MD5(type)];
-}
-
 #pragma mark - Initialization
+
+- (instancetype)initWithNetService:(NSNetService *)netService type:(NSString *)type protocol:(Protocol *)protocol
+{
+    if (self = [super init]) {
+        _netService = netService;
+
+        _name = netService.name;
+        _type = type;
+        _protocol = protocol;
+        _timeoutInterval = 10.0;
+
+        _activeConnection = [NSMutableArray array];
+        _queuedConnections = [NSMutableArray array];
+
+        _netService.delegate = self;
+        [_netService scheduleInRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
+        [_netService resolveWithTimeout:self.timeoutInterval];
+    }
+    return self;
+}
 
 - (instancetype)initWithName:(NSString *)name type:(NSString *)type protocol:(Protocol *)protocol
 {
@@ -163,7 +178,7 @@ static void * SPLRemoteObjectObserver = &SPLRemoteObjectObserver;
         _activeConnection = [NSMutableArray array];
         _queuedConnections = [NSMutableArray array];
 
-        _hostBrowser = [[_SPLRemoteObjectProxyBrowser alloc] initWithName:self.name netServiceType:self.netServiceType];
+        _hostBrowser = [[_SPLRemoteObjectProxyBrowser alloc] initWithName:self.name netServiceType:[self.type netServiceTypeWithProtocol:self.protocol]];
         [_hostBrowser addObserver:self forKeyPath:NSStringFromSelector(@selector(userInfo)) options:NSKeyValueObservingOptionNew context:SPLRemoteObjectObserver];
         [_hostBrowser addObserver:self forKeyPath:NSStringFromSelector(@selector(resolvedNetService)) options:NSKeyValueObservingOptionNew context:SPLRemoteObjectObserver];
         [_hostBrowser startDiscoveringRemoteObjectHosts];
@@ -182,6 +197,24 @@ static void * SPLRemoteObjectObserver = &SPLRemoteObjectObserver;
     } else {
         [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
     }
+}
+
+#pragma mark - NSNetServiceDelegate
+
+- (void)netService:(NSNetService *)sender didNotResolve:(NSDictionary *)errorDict
+{
+    NSLog(@"%@", errorDict);
+    NSParameterAssert(errorDict);
+}
+
+- (void)netServiceDidResolveAddress:(NSNetService *)sender
+{
+    [self.netService startMonitoring];
+}
+
+- (void)netService:(NSNetService *)sender didUpdateTXTRecordData:(NSData *)data
+{
+
 }
 
 #pragma mark - NSObject
@@ -345,9 +378,29 @@ static void * SPLRemoteObjectObserver = &SPLRemoteObjectObserver;
     });
 }
 
+#pragma mark - NSObject
+
+- (NSString *)description
+{
+    return [NSString stringWithFormat:@"%@: netService: %@", [super description], self.netService];
+}
+
+- (void)dealloc
+{
+    [_hostBrowser removeObserver:self forKeyPath:NSStringFromSelector(@selector(userInfo)) context:SPLRemoteObjectObserver];
+    [_hostBrowser removeObserver:self forKeyPath:NSStringFromSelector(@selector(resolvedNetService)) context:SPLRemoteObjectObserver];
+
+    if (_netService.delegate == self) {
+        [_netService stop];
+        [_netService stopMonitoring];
+
+        _netService.delegate = nil;
+        [_netService removeFromRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
+    }
+}
+
 #pragma mark - Private category implementation ()
 
-#warning here
 - (void)_removeQueuedConnectionBecauseOfTimeout:(_SPLRemoteObjectQueuedConnection *)queuedConnection
 {
     if ([_queuedConnections containsObject:queuedConnection]) {
@@ -483,7 +536,7 @@ static void * SPLRemoteObjectObserver = &SPLRemoteObjectObserver;
                 dataPackage = [self.encryptionPolicy dataByEncryptingData:dataPackage];
             }
 
-            if (self.netService == nil) {
+            if (self.netService.hostName == nil) {
                 // queue data package to laster save
                 __unsafe_unretained id completionBlock = nil;
                 [anInvocation getArgument:&completionBlock atIndex:anInvocation.methodSignature.numberOfArguments - 1];
@@ -531,7 +584,7 @@ static void * SPLRemoteObjectObserver = &SPLRemoteObjectObserver;
 
 - (BOOL)_invalidateDNSCache
 {
-    NSString *serviceName = [NSString stringWithFormat:@"%@.%@local.", self.name, self.netServiceType];
+    NSString *serviceName = [NSString stringWithFormat:@"%@.%@local.", self.name, [self.type netServiceTypeWithProtocol:self.protocol]];
     NSArray *serviceNameComponents = [serviceName componentsSeparatedByString:@"."];
     NSUInteger serviceNameComponentsCount = serviceNameComponents.count;
 
@@ -577,21 +630,6 @@ static void * SPLRemoteObjectObserver = &SPLRemoteObjectObserver;
     
     return YES;
 }
-
-#pragma mark - NSObject
-
-- (NSString *)description
-{
-    return [NSString stringWithFormat:@"%@: netService: %@", [super description], self.netService];
-}
-
-- (void)dealloc
-{
-    [_hostBrowser removeObserver:self forKeyPath:NSStringFromSelector(@selector(userInfo)) context:SPLRemoteObjectObserver];
-    [_hostBrowser removeObserver:self forKeyPath:NSStringFromSelector(@selector(resolvedNetService)) context:SPLRemoteObjectObserver];
-}
-
-#pragma mark - Private category implementation ()
 
 @end
 

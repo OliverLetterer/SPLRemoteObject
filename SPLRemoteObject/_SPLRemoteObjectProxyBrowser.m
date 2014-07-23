@@ -25,6 +25,7 @@
 //
 
 #import "_SPLRemoteObjectProxyBrowser.h"
+#import "SPLRemoteObject.h"
 #import <UIKit/UIKit.h>
 #import <Foundation/Foundation.h>
 
@@ -36,7 +37,6 @@
 @property (nonatomic, strong) NSNetService *discoveringNetService;
 @property (nonatomic, strong) NSNetServiceBrowser *netServiceBrowser;
 
-+ (NSDictionary *)userInfoFromTXTRecordData:(NSData *)txtData;
 @property (nonatomic, copy) NSDictionary *userInfo;
 
 @end
@@ -44,21 +44,6 @@
 
 
 @implementation _SPLRemoteObjectProxyBrowser
-
-+ (NSDictionary *)userInfoFromTXTRecordData:(NSData *)txtData
-{
-    NSDictionary *dictionary = [NSNetService dictionaryFromTXTRecordData:txtData];
-    NSMutableDictionary *userInfo = [NSMutableDictionary dictionary];
-
-    [dictionary enumerateKeysAndObjectsUsingBlock:^(NSString *key, NSData *data, BOOL *stop) {
-        id object = [NSKeyedUnarchiver unarchiveObjectWithData:data];
-        if (object) {
-            userInfo[key] = object;
-        }
-    }];
-
-    return [userInfo copy];
-}
 
 #pragma mark - Initialization
 
@@ -105,7 +90,7 @@
 {
     [_netServiceBrowser stop];
     self.discoveringNetService = nil;
-    self.discoveringNetService = nil;
+    self.resolvedNetService = nil;
 }
 
 #pragma mark - Memory management
@@ -135,7 +120,7 @@
 
 - (void)netService:(NSNetService *)sender didUpdateTXTRecordData:(NSData *)data
 {
-    self.userInfo = [_SPLRemoteObjectProxyBrowser userInfoFromTXTRecordData:data];
+    self.userInfo = [SPLRemoteObject userInfoFromTXTRecordData:data];
 }
 
 #pragma mark - NSNetServiceBrowserDelegate
@@ -155,7 +140,7 @@
         [netService resolveWithTimeout:10.0];
     }
 
-    self.userInfo = [_SPLRemoteObjectProxyBrowser userInfoFromTXTRecordData:netService.TXTRecordData];
+    self.userInfo = [SPLRemoteObject userInfoFromTXTRecordData:netService.TXTRecordData];
     [netService startMonitoring];
 }
 

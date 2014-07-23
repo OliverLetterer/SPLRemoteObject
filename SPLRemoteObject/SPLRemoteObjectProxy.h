@@ -45,6 +45,7 @@
 
 @property (nonatomic, copy) NSDictionary *userInfo;
 
+- (instancetype)init UNAVAILABLE_ATTRIBUTE;
 - (instancetype)initWithName:(NSString *)name type:(NSString *)type protocol:(Protocol *)protocol target:(id)target completionHandler:(SPLRemoteObjectErrorBlock)completionHandler;
 
 @end

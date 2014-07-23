@@ -27,6 +27,7 @@
 #import <XCTest/XCTest.h>
 #import <Foundation/Foundation.h>
 #import <CTOpenSSLWrapper.h>
+#import <SPLRemoteObjectBrowser.h>
 #import "SPLRemoteObjectProxy.h"
 #import "SPLRemoteObject.h"
 #define EXP_SHORTHAND YES
@@ -124,8 +125,8 @@
     static NSInteger testCounter = 0;
     testCounter++;
 
-    NSString *type = [NSString stringWithFormat:@"testService%ld", (long)testCounter];
-    [Expecta setAsynchronousTestTimeout:60.0];
+    NSString *type = [[NSString stringWithFormat:@"%@%ld", [[NSUUID UUID] UUIDString], (long)testCounter] MD5Digest];
+    [Expecta setAsynchronousTestTimeout:10.0];
     
     self.target = [[SPLRemoteObjectProxyTestTarget alloc] init];
     self.proxy = [[SPLRemoteObjectProxy alloc] initWithName:@"object" type:type protocol:@protocol(SampleProtocol) target:self.target completionHandler:^(NSError *error) {
@@ -141,6 +142,26 @@
     self.target = nil;
     self.proxy = nil;
     self.remoteObject = nil;
+}
+
+- (void)testThatSPLRemoteObjectBrowserDiscoversRemoteObjects
+{
+    SPLRemoteObjectBrowser *browser = [[SPLRemoteObjectBrowser alloc] initWithType:self.proxy.type protocol:self.proxy.protocol];
+    expect(browser.remoteObjects).will.haveCountOf(1);
+
+    SPLRemoteObject<SampleProtocol> *remoteObject = browser.remoteObjects.firstObject;
+    expect(remoteObject.protocol).to.equal(self.remoteObject.protocol);
+    expect(remoteObject.name).to.equal(self.remoteObject.name);
+    expect(remoteObject.type).to.equal(self.remoteObject.type);
+
+    __block NSString *response = nil;
+
+    [remoteObject sayHelloForAction:@"action" withResultsCompletionHandler:^(NSString *responseeeee, NSError *error) {
+        response = responseeeee;
+    }];
+
+    expect(response).will.equal(@"hey there sexy.");
+    expect(self.target.action).to.equal(@"action");
 }
 
 - (void)testInvocationWithResult
