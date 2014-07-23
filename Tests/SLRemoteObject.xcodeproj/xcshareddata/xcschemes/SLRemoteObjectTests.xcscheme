@@ -15,7 +15,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "A7A3A7BA176CFCCC00692214"
-               BuildableName = "SLRemoteObjectTests.octest"
+               BuildableName = "SLRemoteObjectTests.xctest"
                BlueprintName = "SLRemoteObjectTests"
                ReferencedContainer = "container:SLRemoteObject.xcodeproj">
             </BuildableReference>
@@ -28,7 +28,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "A2C45CC86E0E45E5914BF5D1"
+               BlueprintIdentifier = "C1CB935092FB43B59465FF78"
                BuildableName = "libPods.a"
                BlueprintName = "Pods"
                ReferencedContainer = "container:Pods/Pods.xcodeproj">
@@ -47,7 +47,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "A7A3A7BA176CFCCC00692214"
-               BuildableName = "SLRemoteObjectTests.octest"
+               BuildableName = "SLRemoteObjectTests.xctest"
                BlueprintName = "SLRemoteObjectTests"
                ReferencedContainer = "container:SLRemoteObject.xcodeproj">
             </BuildableReference>
@@ -63,6 +63,15 @@
       ignoresPersistentStateOnLaunch = "NO"
       debugDocumentVersioning = "YES"
       allowLocationSimulation = "YES">
+      <MacroExpansion>
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "A7A3A7BA176CFCCC00692214"
+            BuildableName = "SLRemoteObjectTests.xctest"
+            BlueprintName = "SLRemoteObjectTests"
+            ReferencedContainer = "container:SLRemoteObject.xcodeproj">
+         </BuildableReference>
+      </MacroExpansion>
       <AdditionalOptions>
       </AdditionalOptions>
    </LaunchAction>

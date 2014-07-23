@@ -1,10 +1,10 @@
-xcodeproj 'SLRemoteObject'
-workspace '../SLRemoteObject'
+xcodeproj 'SPLRemoteObject'
+workspace '../SPLRemoteObject'
 inhibit_all_warnings!
 
 platform :ios, '7.0'
-link_with 'SLRemoteObjectTests'
+link_with 'SPLRemoteObjectTests'
 
 pod 'OCMock'
 pod 'Expecta'
-pod 'SLRemoteObject', :path => '..'
+pod 'SPLRemoteObject', :path => '..'

@@ -24,9 +24,9 @@
 #define COCOAPODS_VERSION_MINOR_SLObjectiveCRuntimeAdditions 1
 #define COCOAPODS_VERSION_PATCH_SLObjectiveCRuntimeAdditions 4
 
-// SLRemoteObject
-#define COCOAPODS_POD_AVAILABLE_SLRemoteObject
-#define COCOAPODS_VERSION_MAJOR_SLRemoteObject 1
-#define COCOAPODS_VERSION_MINOR_SLRemoteObject 4
-#define COCOAPODS_VERSION_PATCH_SLRemoteObject 0
+// SPLRemoteObject
+#define COCOAPODS_POD_AVAILABLE_SPLRemoteObject
+#define COCOAPODS_VERSION_MAJOR_SPLRemoteObject 2
+#define COCOAPODS_VERSION_MINOR_SPLRemoteObject 0
+#define COCOAPODS_VERSION_PATCH_SPLRemoteObject 0
 

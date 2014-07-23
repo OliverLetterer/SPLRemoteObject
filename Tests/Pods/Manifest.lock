@@ -2,22 +2,22 @@ PODS:
   - Expecta (0.3.1)
   - OCMock (3.0.2)
   - SLObjectiveCRuntimeAdditions (1.1.4)
-  - SLRemoteObject (1.4.0):
+  - SPLRemoteObject (2.0.0):
     - SLObjectiveCRuntimeAdditions (>= 1.0.0)
 
 DEPENDENCIES:
   - Expecta
   - OCMock
-  - SLRemoteObject (from `..`)
+  - SPLRemoteObject (from `..`)
 
 EXTERNAL SOURCES:
-  SLRemoteObject:
+  SPLRemoteObject:
     :path: ..
 
 SPEC CHECKSUMS:
   Expecta: 03aabd0a89d8dea843baecb19a7fd7466a69a31d
   OCMock: b9836ab89d8d5e66cbe6333f93857037c310ee62
   SLObjectiveCRuntimeAdditions: 53a3d05059b6b30fffcd91c62fe676ae969e1c71
-  SLRemoteObject: 96269c479992e3f0664e3dc18708148e8e4b971d
+  SPLRemoteObject: 3d495e69600391131c680e5c1679ddf5ab9b72d3
 
 COCOAPODS: 0.33.1

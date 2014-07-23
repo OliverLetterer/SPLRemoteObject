@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		A7A3A7BD176CFCCC00692214 /* SenTestingKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A7A3A7BC176CFCCC00692214 /* SenTestingKit.framework */; };
 		A7A3A7BE176CFCCC00692214 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A7A3A79E176CFCCB00692214 /* UIKit.framework */; };
 		A7A3A7BF176CFCCC00692214 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A7A3A7A0176CFCCB00692214 /* Foundation.framework */; };
 		A7A3A7C7176CFCCC00692214 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = A7A3A7C5176CFCCC00692214 /* InfoPlist.strings */; };
@@ -21,8 +20,7 @@
 		A7A3A79E176CFCCB00692214 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		A7A3A7A0176CFCCB00692214 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		A7A3A7A2176CFCCB00692214 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
-		A7A3A7BB176CFCCC00692214 /* SLRemoteObjectTests.octest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SLRemoteObjectTests.octest; sourceTree = BUILT_PRODUCTS_DIR; };
-		A7A3A7BC176CFCCC00692214 /* SenTestingKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SenTestingKit.framework; path = Library/Frameworks/SenTestingKit.framework; sourceTree = DEVELOPER_DIR; };
+		A7A3A7BB176CFCCC00692214 /* SLRemoteObjectTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SLRemoteObjectTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A7A3A7C4176CFCCC00692214 /* SLRemoteObjectTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "SLRemoteObjectTests-Info.plist"; sourceTree = "<group>"; };
 		A7A3A7C6176CFCCC00692214 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		A7A3A7C9176CFCCC00692214 /* SLRemoteObjectTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SLRemoteObjectTests.m; sourceTree = "<group>"; };
@@ -36,7 +34,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A7A3A7BD176CFCCC00692214 /* SenTestingKit.framework in Frameworks */,
 				A7A3A7BE176CFCCC00692214 /* UIKit.framework in Frameworks */,
 				A7A3A7BF176CFCCC00692214 /* Foundation.framework in Frameworks */,
 				CC20BA2C3C364BD0BDDDA901 /* libPods.a in Frameworks */,
@@ -60,7 +57,7 @@
 		A7A3A79C176CFCCB00692214 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				A7A3A7BB176CFCCC00692214 /* SLRemoteObjectTests.octest */,
+				A7A3A7BB176CFCCC00692214 /* SLRemoteObjectTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -71,7 +68,6 @@
 				A7A3A79E176CFCCB00692214 /* UIKit.framework */,
 				A7A3A7A0176CFCCB00692214 /* Foundation.framework */,
 				A7A3A7A2176CFCCB00692214 /* CoreGraphics.framework */,
-				A7A3A7BC176CFCCC00692214 /* SenTestingKit.framework */,
 				2F6BEED18BAD47A09E51328D /* libPods.a */,
 			);
 			name = Frameworks;
@@ -133,8 +129,8 @@
 			);
 			name = SLRemoteObjectTests;
 			productName = SLRemoteObjectTests;
-			productReference = A7A3A7BB176CFCCC00692214 /* SLRemoteObjectTests.octest */;
-			productType = "com.apple.product-type.bundle.ocunit-test";
+			productReference = A7A3A7BB176CFCCC00692214 /* SLRemoteObjectTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
 
@@ -143,6 +139,7 @@
 			isa = PBXProject;
 			attributes = {
 				CLASSPREFIX = SL;
+				LastTestingUpgradeCheck = 0600;
 				LastUpgradeCheck = 0460;
 				ORGANIZATIONNAME = "Sparrow-Labs";
 			};
@@ -267,7 +264,7 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -293,7 +290,7 @@
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
 				OTHER_CFLAGS = "-DNS_BLOCK_ASSERTIONS=1";
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -307,12 +304,12 @@
 				FRAMEWORK_SEARCH_PATHS = (
 					"\"$(SDKROOT)/Developer/Library/Frameworks\"",
 					"\"$(DEVELOPER_LIBRARY_DIR)/Frameworks\"",
+					"$(inherited)",
 				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "";
 				INFOPLIST_FILE = "SLRemoteObjectTests/SLRemoteObjectTests-Info.plist";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				WRAPPER_EXTENSION = octest;
 			};
 			name = Debug;
 		};
@@ -323,12 +320,12 @@
 				FRAMEWORK_SEARCH_PATHS = (
 					"\"$(SDKROOT)/Developer/Library/Frameworks\"",
 					"\"$(DEVELOPER_LIBRARY_DIR)/Frameworks\"",
+					"$(inherited)",
 				);
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "";
 				INFOPLIST_FILE = "SLRemoteObjectTests/SLRemoteObjectTests-Info.plist";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				WRAPPER_EXTENSION = octest;
 			};
 			name = Release;
 		};

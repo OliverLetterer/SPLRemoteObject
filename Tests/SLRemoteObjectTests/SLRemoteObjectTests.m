@@ -1,6 +1,6 @@
 //
-//  SLRemoteObjectTests.m
-//  SLRemoteObject
+//  SPLRemoteObjectTests.m
+//  SPLRemoteObject
 //
 //  The MIT License (MIT)
 //  Copyright (c) 2013 Oliver Letterer, Sparrow-Labs
@@ -26,8 +26,8 @@
 
 #import <XCTest/XCTest.h>
 #import <Foundation/Foundation.h>
-#import "SLRemoteObjectProxy.h"
-#import "SLRemoteObject.h"
+#import "SPLRemoteObjectProxy.h"
+#import "SPLRemoteObject.h"
 #define EXP_SHORTHAND YES
 #import "Expecta.h"
 #import "OCMock.h"
@@ -44,9 +44,9 @@
 
 
 
-@interface SLRemoteObjectProxyTestTarget : NSObject<SampleProtocol> @end
+@interface SPLRemoteObjectProxyTestTarget : NSObject<SampleProtocol> @end
 
-@implementation SLRemoteObjectProxyTestTarget
+@implementation SPLRemoteObjectProxyTestTarget
 
 - (NSString *)sayHello
 {
@@ -57,9 +57,9 @@
 
 
 
-@interface SLRemoteObjectTests : XCTestCase {
-    SLRemoteObjectProxyTestTarget *_target;
-    SLRemoteObjectProxy *_proxy;
+@interface SPLRemoteObjectTests : XCTestCase {
+    SPLRemoteObjectProxyTestTarget *_target;
+    SPLRemoteObjectProxy *_proxy;
     id<SampleProtocol> _remoteObject;
 }
 
@@ -67,17 +67,17 @@
 
 
 
-@implementation SLRemoteObjectTests
+@implementation SPLRemoteObjectTests
 
 - (void)setUp
 {
     [super setUp];
     
-    _target = [SLRemoteObjectProxyTestTarget new];
-    _proxy = [[SLRemoteObjectProxy alloc] initWithServiceName:@"someServiceName" target:_target protocol:@protocol(SampleProtocol) options:nil completionHandler:^(NSError *error) {
+    _target = [SPLRemoteObjectProxyTestTarget new];
+    _proxy = [[SPLRemoteObjectProxy alloc] initWithServiceName:@"someServiceName" target:_target protocol:@protocol(SampleProtocol) options:nil completionHandler:^(NSError *error) {
         
     }];
-    _remoteObject = [SLRemoteObject remoteObjectWithServiceName:@"someServiceName" protocol:@protocol(SampleProtocol) options:nil];
+    _remoteObject = [SPLRemoteObject remoteObjectWithServiceName:@"someServiceName" protocol:@protocol(SampleProtocol) options:nil];
 }
 
 - (void)tearDown
@@ -89,7 +89,7 @@
     _remoteObject = nil;
 }
 
-- (void)testThatSLRemoteObjectSendMessageToAnSLRemoteObjectProxyAndReceivesAResponse
+- (void)testThatSPLRemoteObjectSendMessageToAnSPLRemoteObjectProxyAndReceivesAResponse
 {
     [Expecta setAsynchronousTestTimeout:5.0];
     
