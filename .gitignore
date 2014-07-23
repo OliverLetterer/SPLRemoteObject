@@ -16,8 +16,6 @@ xcuserdata/*
 # old skool
 .svn
 
-Pods/
-
 # osx noise
 .DS_Store
 profile

@@ -24,7 +24,7 @@
 //  THE SOFTWARE.
 //
 
-#import <SenTestingKit/SenTestingKit.h>
+#import <XCTest/XCTest.h>
 #import <Foundation/Foundation.h>
 #import "SLRemoteObjectProxy.h"
 #import "SLRemoteObject.h"
@@ -57,7 +57,7 @@
 
 
 
-@interface SLRemoteObjectTests : SenTestCase {
+@interface SLRemoteObjectTests : XCTestCase {
     SLRemoteObjectProxyTestTarget *_target;
     SLRemoteObjectProxy *_proxy;
     id<SampleProtocol> _remoteObject;

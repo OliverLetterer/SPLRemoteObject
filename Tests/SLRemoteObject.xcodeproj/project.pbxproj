@@ -134,7 +134,7 @@
 			name = SLRemoteObjectTests;
 			productName = SLRemoteObjectTests;
 			productReference = A7A3A7BB176CFCCC00692214 /* SLRemoteObjectTests.octest */;
-			productType = "com.apple.product-type.bundle";
+			productType = "com.apple.product-type.bundle.ocunit-test";
 		};
 /* End PBXNativeTarget section */
 
