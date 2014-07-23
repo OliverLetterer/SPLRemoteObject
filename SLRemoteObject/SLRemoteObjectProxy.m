@@ -62,13 +62,40 @@ void SLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBac
 
 - (void)_acceptConnectionFromNewNativeSocket:(CFSocketNativeHandle)nativeSocketHandle;
 
++ (NSData *)dataFromUserInfoDictionary:(NSDictionary *)dictionary;
+
 @end
 
 
 
 @implementation SLRemoteObjectProxy
 
++ (NSData *)dataFromUserInfoDictionary:(NSDictionary *)dictionary
+{
+    NSMutableDictionary *TXTRecordDictionary = [NSMutableDictionary dictionary];
+
+    [dictionary enumerateKeysAndObjectsUsingBlock:^(id key, id obj, BOOL *stop) {
+        NSParameterAssert([key isKindOfClass:[NSString class]]);
+        NSParameterAssert([obj conformsToProtocol:@protocol(NSSecureCoding)]);
+
+        TXTRecordDictionary[key] = [NSKeyedArchiver archivedDataWithRootObject:obj];
+    }];
+
+    return [NSNetService dataFromTXTRecordDictionary:TXTRecordDictionary];
+}
+
 #pragma mark - setters and getters
+
+- (void)setUserInfo:(NSDictionary *)userInfo
+{
+    if (userInfo != _userInfo) {
+        _userInfo = [userInfo copy];
+        if (self.netService) {
+            BOOL success = [self.netService setTXTRecordData:[SLRemoteObjectProxy dataFromUserInfoDictionary:userInfo]];
+            NSParameterAssert(success);
+        }
+    }
+}
 
 - (void)setIdentity:(SecIdentityRef)identity
 {
@@ -442,6 +469,10 @@ void SLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBac
     _netService = [[NSNetService alloc] initWithDomain:@"" type:self.serviceType name:self.serviceName port:_port];
     [_netService scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
     _netService.delegate = self;
+    if (self.userInfo) {
+        BOOL success = [_netService setTXTRecordData:[NSNetService dataFromTXTRecordDictionary:self.userInfo]];
+        NSParameterAssert(success);
+    }
 	[_netService publish];
 }
 

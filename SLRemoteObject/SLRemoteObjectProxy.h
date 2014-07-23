@@ -45,6 +45,8 @@
 @property (nonatomic, readonly) SLRemoteObjectDataDecryptionBlock decryptionBlock;
 @property (nonatomic, readonly) SecIdentityRef identity;
 
+@property (nonatomic, copy) NSDictionary *userInfo;
+
 - (id)initWithServiceName:(NSString *)serviceName target:(id)target protocol:(Protocol *)protocol options:(NSDictionary *)options completionHandler:(SLRemoteObjectErrorBlock)completionHandler;
 
 @end

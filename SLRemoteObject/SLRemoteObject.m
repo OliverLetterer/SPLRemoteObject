@@ -72,6 +72,8 @@ static BOOL signatureMatches(const char *signature1, const char *signature2)
 
 
 
+static void * SLRemoteObjectUserInfoObserver = &SLRemoteObjectUserInfoObserver;
+
 @interface SLRemoteObject () <_SLRemoteObjectConnectionDelegate, _SLRemoteObjectProxyBrowserDelegate> {
     Protocol *_protocol;
     _SLRemoteObjectProxyBrowser *_hostBrowser;
@@ -81,6 +83,7 @@ static BOOL signatureMatches(const char *signature1, const char *signature2)
 }
 
 @property (nonatomic, readonly) NSString *serviceType;
+@property (nonatomic, copy) NSDictionary *userInfo;
 
 - (id)initWithServiceName:(NSString *)serviceName protocol:(Protocol *)protocol options:(NSDictionary *)options;
 
@@ -135,10 +138,20 @@ static BOOL signatureMatches(const char *signature1, const char *signature2)
         _queuedConnections = [NSMutableArray array];
 
         _hostBrowser = [[_SLRemoteObjectProxyBrowser alloc] initWithServiceType:self.serviceType];
+        [_hostBrowser addObserver:self forKeyPath:NSStringFromSelector(@selector(userInfo)) options:NSKeyValueObservingOptionNew context:SLRemoteObjectUserInfoObserver];
         _hostBrowser.delegate = self;
         [_hostBrowser startDiscoveringRemoteObjectHosts];
     }
     return self;
+}
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
+{
+    if (context == SLRemoteObjectUserInfoObserver) {
+        self.userInfo = _hostBrowser.userInfo;
+    } else {
+        [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
+    }
 }
 
 #pragma mark - NSObject
@@ -621,7 +634,7 @@ static BOOL signatureMatches(const char *signature1, const char *signature2)
 
 - (void)dealloc
 {
-    
+    [_hostBrowser removeObserver:self forKeyPath:NSStringFromSelector(@selector(userInfo)) context:SLRemoteObjectUserInfoObserver];
 }
 
 #pragma mark - Private category implementation ()

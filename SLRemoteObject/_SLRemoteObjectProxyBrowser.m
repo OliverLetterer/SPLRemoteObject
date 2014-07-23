@@ -36,11 +36,29 @@
     NSMutableArray *_discoveringNetServices;
 }
 
++ (NSDictionary *)userInfoFromTXTRecordData:(NSData *)txtData;
+@property (nonatomic, copy) NSDictionary *userInfo;
+
 @end
 
 
 
 @implementation _SLRemoteObjectProxyBrowser
+
++ (NSDictionary *)userInfoFromTXTRecordData:(NSData *)txtData
+{
+    NSDictionary *dictionary = [NSNetService dictionaryFromTXTRecordData:txtData];
+    NSMutableDictionary *userInfo = [NSMutableDictionary dictionary];
+
+    [dictionary enumerateKeysAndObjectsUsingBlock:^(NSString *key, NSData *data, BOOL *stop) {
+        id object = [NSKeyedUnarchiver unarchiveObjectWithData:data];
+        if (object) {
+            userInfo[key] = object;
+        }
+    }];
+
+    return [userInfo copy];
+}
 
 #pragma mark - Initialization
 
@@ -119,11 +137,20 @@
     [_resolvedNetServices removeObject:sender];
 }
 
+- (void)netService:(NSNetService *)sender didUpdateTXTRecordData:(NSData *)data
+{
+    self.userInfo = [_SLRemoteObjectProxyBrowser userInfoFromTXTRecordData:data];
+}
+
 #pragma mark - NSNetServiceBrowserDelegate
 
 - (void)netServiceBrowser:(NSNetServiceBrowser *)netServiceBrowser didFindService:(NSNetService *)netService moreComing:(BOOL)moreComing
 {
+    [netService startMonitoring];
+    
     if (netService.hostName && netService.port >= 0) {
+        self.userInfo = [_SLRemoteObjectProxyBrowser userInfoFromTXTRecordData:netService.TXTRecordData];
+        
         [_resolvedNetServices addObject:netService];
         [_delegate remoteObjectHostBrowserDidChangeNumberOfResolvedNetServices:self];
     } else {
@@ -131,6 +158,8 @@
         netService.delegate = self;
         [netService scheduleInRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
         [netService resolveWithTimeout:10.0];
+
+        self.userInfo = [_SLRemoteObjectProxyBrowser userInfoFromTXTRecordData:netService.TXTRecordData];
     }
 }
 

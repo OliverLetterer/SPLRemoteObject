@@ -36,6 +36,8 @@
 @property (nonatomic, assign) CFTimeInterval timeoutInterval;
 @property (nonatomic, readonly) NSString *serviceName;
 
+@property (nonatomic, copy, readonly) NSDictionary *userInfo;
+
 @property (nonatomic, readonly) SLRemoteObjectEncryption encryptionType;
 @property (nonatomic, readonly) NSData *symmetricKey;
 @property (nonatomic, readonly) SLRemoteObjectDataEncryptionBlock encryptionBlock;

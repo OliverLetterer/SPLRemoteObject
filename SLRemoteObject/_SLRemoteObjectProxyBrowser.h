@@ -39,6 +39,8 @@
  */
 @interface _SLRemoteObjectProxyBrowser : NSObject
 
+@property (nonatomic, copy, readonly) NSDictionary *userInfo;
+
 @property (nonatomic, readonly) NSString *serviceType;
 @property (nonatomic, readonly) NSArray *resolvedNetServices;
 @property (nonatomic, weak) id<_SLRemoteObjectProxyBrowserDelegate> delegate;
