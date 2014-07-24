@@ -5,23 +5,23 @@
 [![License](https://img.shields.io/cocoapods/l/SPLRemoteObject.svg?style=flat)](http://cocoadocs.org/docsets/SPLRemoteObject)
 [![Platform](https://img.shields.io/cocoapods/p/SPLRemoteObject.svg?style=flat)](http://cocoadocs.org/docsets/SPLRemoteObject)
 
-It's just an objc RPC framework for your local network. SLRemoteObject let's you communicate between different devices in a local network very easily.
+Objc RPC framework for your local network. SPLRemoteObject let's you communicate between different devices in a local network very easily.
 
 ## Getting started
 
 * Add
 
 ```
-pod 'SLRemoteObject'
+pod 'SPLRemoteObject'
 ```
 to your `Podfile` and import
 
 ```
-#import "SLRemoteObject.h"
-#import "SLRemoteObjectProxy.h"
+#import "SPLRemoteObject.h"
+#import "SPLRemoteObjectProxy.h"
 ```
 
-* Check out [this blog post](http://blog.dev.sparrow-labs.de/2013/06/16/slremoteobject.html) on how to use SLRemoteObject.
+* Check out [this blog post](http://blog.dev.sparrow-labs.de/2013/06/16/slremoteobject.html) on how to use SPLRemoteObject.
 
 
 ## License

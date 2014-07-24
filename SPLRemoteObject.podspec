@@ -7,7 +7,7 @@ Pod::Spec.new do |spec|
   spec.frameworks   = 'Foundation', 'UIKit', 'CFNetwork', 'Security'
   spec.requires_arc = true
   spec.homepage     = 'https://github.com/OliverLetterer/SPLRemoteObject'
-  spec.summary      = 'Its just an objc RPC framework for your local network.'
+  spec.summary      = 'Major rewrite of SLRemoteObject.'
   spec.author       = { 'Oliver Letterer' => 'oliver.letterer@gmail.com' }
   spec.source_files = 'SPLRemoteObject'
 

@@ -15,7 +15,7 @@
 static NSString *MD5(NSString *string)
 {
     unsigned char md5Buffer[CC_MD5_DIGEST_LENGTH];
-    CC_MD5(string.UTF8String, strlen(string.UTF8String), md5Buffer);
+    CC_MD5(string.UTF8String, (CC_LONG)strlen(string.UTF8String), md5Buffer);
 
     NSMutableString *result = [NSMutableString stringWithCapacity:CC_MD5_DIGEST_LENGTH * 2];
     for (int i = 0; i < CC_MD5_DIGEST_LENGTH; i++) {
