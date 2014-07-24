@@ -133,7 +133,7 @@
                   };
 
     NSString *type = [[NSString stringWithFormat:@"%@%ld", [[NSUUID UUID] UUIDString], (long)testCounter] MD5Digest];
-    [Expecta setAsynchronousTestTimeout:10.0];
+    [Expecta setAsynchronousTestTimeout:15.0];
     
     self.target = [[SPLRemoteObjectProxyTestTarget alloc] init];
     self.proxy = [[SPLRemoteObjectProxy alloc] initWithName:@"object" type:type protocol:@protocol(SampleProtocol) target:self.target completionHandler:^(NSError *error) {
@@ -191,6 +191,18 @@
     expect(response).will.equal(@"hey there sexy.");
 }
 
+- (void)testInvocationWithResultAndError
+{
+    __block NSError *resultingError = nil;
+
+    self.proxy = nil;
+    [_remoteObject sayHelloWithResultsCompletionHandler:^(NSString *responseeeee, NSError *error) {
+        resultingError = error;
+    }];
+
+    expect(resultingError).willNot.beNil();
+}
+
 - (void)testInvocationWithResultAndEncryption
 {
     SPLRemoteObjectTestEncryptionPolicy *policy = [[SPLRemoteObjectTestEncryptionPolicy alloc] init];
@@ -229,6 +241,18 @@
     }];
 
     expect(called).will.beTruthy();
+}
+
+- (void)testInvocationWithoutResultAndError
+{
+    __block NSError *resulingError = nil;
+
+    self.proxy = nil;
+    [_remoteObject performActionWithCompletionHandler:^(NSError *error) {
+        resulingError = error;
+    }];
+
+    expect(resulingError).willNot.beNil();
 }
 
 - (void)testInvocationWithoutResultButArguments

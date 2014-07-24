@@ -179,7 +179,7 @@ static void * SPLRemoteObjectObserver = &SPLRemoteObjectObserver;
                 [connection connect];
                 [connection sendDataPackage:queuedConnection.dataPackage];
             }
-            
+
             [_queuedConnections removeAllObjects];
         }
     }
@@ -305,20 +305,14 @@ static void * SPLRemoteObjectObserver = &SPLRemoteObjectObserver;
     }
 
     if (hostConnection.completionBlock) {
-        NSDictionary *userInfo = (@{
-                                    NSLocalizedDescriptionKey: NSLocalizedString(@"Connection to remote host failed", @"")
-                                    });
+        NSDictionary *userInfo = @{
+                                   NSLocalizedDescriptionKey: NSLocalizedString(@"Connection to remote host failed", @"")
+                                   };
         NSError *error = [NSError errorWithDomain:SPLRemoteObjectErrorDomain
                                              code:SPLRemoteObjectConnectionFailed
                                          userInfo:userInfo];
-
-        if (signatureMatches(hostConnection.remoteMethodSignature.methodReturnType, @encode(void))) {
-            void(^completionBlock)(NSError *error) = hostConnection.completionBlock;
-            completionBlock(error);
-        } else if (signatureMatches(hostConnection.remoteMethodSignature.methodReturnType, @encode(id))) {
-            void(^completionBlock)(id object, NSError *error) = hostConnection.completionBlock;
-            completionBlock(nil, error);
-        }
+        invokeCompletionHandler(hostConnection.completionBlock, nil, error);
+        hostConnection.completionBlock = nil;
     }
 
     // this must be asynced to the main queue because the current runloop is retaining the inputstream of the connection and connection is getting deallocated, and the inputstream then calls a method on the connection. this is _NOT_ fixable by removing the inputstream from the runloop and releasing it... dont know why... :(
@@ -333,20 +327,15 @@ static void * SPLRemoteObjectObserver = &SPLRemoteObjectObserver;
 
     // if everything worked correctly, we remove the completionBlock => if we have a completion block, there was an error
     if (hostConnection.completionBlock) {
-        NSDictionary *userInfo = (@{
-                                    NSLocalizedDescriptionKey: NSLocalizedString(@"Connection to remote host failed", @"")
-                                    });
+        NSDictionary *userInfo = @{
+                                   NSLocalizedDescriptionKey: NSLocalizedString(@"Connection to remote host failed", @"")
+                                   };
         NSError *error = [NSError errorWithDomain:SPLRemoteObjectErrorDomain
                                              code:SPLRemoteObjectConnectionFailed
                                          userInfo:userInfo];
 
-        if (signatureMatches(hostConnection.remoteMethodSignature.methodReturnType, @encode(void))) {
-            void(^completionBlock)(NSError *error) = hostConnection.completionBlock;
-            completionBlock(error);
-        } else if (signatureMatches(hostConnection.remoteMethodSignature.methodReturnType, @encode(id))) {
-            void(^completionBlock)(id object, NSError *error) = hostConnection.completionBlock;
-            completionBlock(nil, error);
-        }
+        invokeCompletionHandler(hostConnection.completionBlock, nil, error);
+        hostConnection.completionBlock = nil;
     }
 
     dispatch_async(dispatch_get_main_queue(), ^(void) {
@@ -575,7 +564,6 @@ static void * SPLRemoteObjectObserver = &SPLRemoteObjectObserver;
                 _SPLRemoteObjectHostConnection *connection = [[_SPLRemoteObjectHostConnection alloc] initWithHostAddress:self.netService.hostName port:self.netService.port];
                 connection.completionBlock = completionBlock;
                 connection.delegate = self;
-                connection.remoteMethodSignature = methodSignature;
                 connection.shouldRetryIfConnectionFails = YES;
                 objc_setAssociatedObject(connection, &SPLRemoteObjectInvocationKey, anInvocation, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 
