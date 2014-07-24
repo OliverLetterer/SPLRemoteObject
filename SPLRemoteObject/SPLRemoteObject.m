@@ -37,6 +37,48 @@
 #import <net/if.h>
 #import <AssertMacros.h>
 
+static void invokeCompletionHandler(id genericCompletionBlock, id object, NSError *error) {
+    if (!genericCompletionBlock) {
+        return;
+    }
+
+    SLBlockDescription *blockDescription = [[SLBlockDescription alloc] initWithBlock:genericCompletionBlock];
+    NSMethodSignature *blockSignature = blockDescription.blockSignature;
+
+    if (blockSignature.numberOfArguments == 3) {
+        void(^completionBlock)(id object, NSError *error) = genericCompletionBlock;
+
+        if (object) {
+            NSString *className = [NSString stringWithFormat:@"%s", [blockSignature getArgumentTypeAtIndex:1]];
+            className = [className substringWithRange:NSMakeRange(2, className.length - 3)];
+
+            if (![object isKindOfClass:NSClassFromString(className)]) {
+                object = nil;
+                error = [NSError errorWithDomain:SPLRemoteObjectErrorDomain code:SPLRemoteObjectConnectionIncompatibleProtocol userInfo:NULL];
+            }
+        }
+
+        if ([NSThread currentThread].isMainThread) {
+            completionBlock(object, error);
+        } else {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                completionBlock(object, error);
+            });
+        }
+    } else if (blockSignature.numberOfArguments == 2) {
+        void(^completionBlock)(NSError *error) = genericCompletionBlock;
+        if ([NSThread currentThread].isMainThread) {
+            completionBlock(error);
+        } else {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                completionBlock(error);
+            });
+        }
+    } else {
+        NSCAssert(NO, @"block %@ signature not supported: %@", genericCompletionBlock, blockSignature);
+    }
+};
+
 
 
 char * const SPLRemoteObjectInvocationKey;
@@ -49,7 +91,6 @@ static BOOL signatureMatches(const char *signature1, const char *signature2)
 @interface _SPLRemoteObjectQueuedConnection : NSObject
 
 @property (nonatomic, copy) id completionBlock;
-@property (nonatomic, strong) NSMethodSignature *remoteMethodSignature;
 @property (nonatomic, strong) NSData *dataPackage;
 @property (nonatomic, assign) BOOL shouldRetryIfConnectionFails;
 
@@ -130,7 +171,6 @@ static void * SPLRemoteObjectObserver = &SPLRemoteObjectObserver;
                 _SPLRemoteObjectHostConnection *connection = [[_SPLRemoteObjectHostConnection alloc] initWithHostAddress:_netService.hostName port:_netService.port];
                 connection.completionBlock = queuedConnection.completionBlock;
                 connection.delegate = self;
-                connection.remoteMethodSignature = queuedConnection.remoteMethodSignature;
                 connection.shouldRetryIfConnectionFails = queuedConnection.shouldRetryIfConnectionFails;
                 objc_setAssociatedObject(connection, &SPLRemoteObjectInvocationKey, invocation, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 
@@ -337,37 +377,10 @@ static void * SPLRemoteObjectObserver = &SPLRemoteObjectObserver;
                     object = nil;
                 }
 
-                void(^invokeCompletionHandler)(id object, NSError *error) = ^(id object, NSError *error) {
-                    NSMethodSignature *blockSignature = blockDescription.blockSignature;
-
-                    if (blockSignature.numberOfArguments == 3) {
-                        void(^completionBlock)(id object, NSError *error) = genericCompletionBlock;
-
-                        if (object) {
-                            NSString *className = [NSString stringWithFormat:@"%s", [blockSignature getArgumentTypeAtIndex:1]];
-                            className = [className substringWithRange:NSMakeRange(2, className.length - 3)];
-
-                            if (![object isKindOfClass:NSClassFromString(className)]) {
-                                object = nil;
-                                error = [NSError errorWithDomain:SPLRemoteObjectErrorDomain code:SPLRemoteObjectConnectionIncompatibleProtocol userInfo:NULL];
-                            }
-                        }
-
-                        dispatch_async(dispatch_get_main_queue(), ^{
-                            completionBlock(object, error);
-                        });
-                    } else {
-                        void(^completionBlock)(NSError *error) = genericCompletionBlock;
-                        dispatch_async(dispatch_get_main_queue(), ^{
-                            completionBlock(error);
-                        });
-                    }
-                };
-
                 if ([object isKindOfClass:[_SPLIncompatibleResponse class]]) {
-                    invokeCompletionHandler(nil, [NSError errorWithDomain:SPLRemoteObjectErrorDomain code:SPLRemoteObjectConnectionIncompatibleProtocol userInfo:NULL]);
+                    invokeCompletionHandler(genericCompletionBlock, nil, [NSError errorWithDomain:SPLRemoteObjectErrorDomain code:SPLRemoteObjectConnectionIncompatibleProtocol userInfo:NULL]);
                 } else {
-                    invokeCompletionHandler(object, nil);
+                    invokeCompletionHandler(genericCompletionBlock, object, nil);
                 }
             } @catch (NSException *exception) { }
         });
@@ -411,15 +424,8 @@ static void * SPLRemoteObjectObserver = &SPLRemoteObjectObserver;
         NSError *error = [NSError errorWithDomain:SPLRemoteObjectErrorDomain
                                              code:SPLRemoteObjectConnectionFailed
                                          userInfo:userInfo];
-        if (queuedConnection.completionBlock) {
-            if (signatureMatches(queuedConnection.remoteMethodSignature.methodReturnType, @encode(void))) {
-                void(^completionBlock)(NSError *error) = queuedConnection.completionBlock;
-                completionBlock(error);
-            } else if (signatureMatches(queuedConnection.remoteMethodSignature.methodReturnType, @encode(id))) {
-                void(^completionBlock)(id object, NSError *error) = queuedConnection.completionBlock;
-                completionBlock(nil, error);
-            }
-        }
+        invokeCompletionHandler(queuedConnection.completionBlock, nil, error);
+        queuedConnection.completionBlock = nil;
 
         [[NSNotificationCenter defaultCenter] postNotificationName:SPLRemoteObjectNetworkOperationDidEndNotification object:nil];
         [_queuedConnections removeObject:queuedConnection];
@@ -544,7 +550,6 @@ static void * SPLRemoteObjectObserver = &SPLRemoteObjectObserver;
 
                 _SPLRemoteObjectQueuedConnection *queuedConnection = [[_SPLRemoteObjectQueuedConnection alloc] init];
                 queuedConnection.completionBlock = completionBlock;
-                queuedConnection.remoteMethodSignature = methodSignature;
                 queuedConnection.dataPackage = dataPackage;
                 queuedConnection.shouldRetryIfConnectionFails = YES;
                 objc_setAssociatedObject(queuedConnection, &SPLRemoteObjectInvocationKey, anInvocation, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
