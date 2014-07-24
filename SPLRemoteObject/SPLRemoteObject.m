@@ -209,12 +209,13 @@ static void * SPLRemoteObjectObserver = &SPLRemoteObjectObserver;
 
 - (void)netServiceDidResolveAddress:(NSNetService *)sender
 {
+    self.reachabilityStatus = SPLRemoteObjectReachabilityStatusAvailable;
     [self.netService startMonitoring];
 }
 
 - (void)netService:(NSNetService *)sender didUpdateTXTRecordData:(NSData *)data
 {
-
+    self.userInfo = [SPLRemoteObject userInfoFromTXTRecordData:data];
 }
 
 #pragma mark - NSObject

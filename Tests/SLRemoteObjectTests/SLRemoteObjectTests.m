@@ -153,6 +153,7 @@
     expect(remoteObject.protocol).to.equal(self.remoteObject.protocol);
     expect(remoteObject.name).to.equal(self.remoteObject.name);
     expect(remoteObject.type).to.equal(self.remoteObject.type);
+    expect(remoteObject.reachabilityStatus).will.equal(SPLRemoteObjectReachabilityStatusAvailable);
 
     __block NSString *response = nil;
 
