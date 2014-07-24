@@ -353,7 +353,6 @@ static void * SPLRemoteObjectObserver = &SPLRemoteObjectObserver;
 
         // check for incompatible response
         dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_BACKGROUND, 0), ^{
-            SLBlockDescription *blockDescription = [[SLBlockDescription alloc] initWithBlock:genericCompletionBlock];
             @try {
                 NSData *thisDataPackage = dataPackage;
 
