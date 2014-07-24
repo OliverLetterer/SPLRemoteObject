@@ -108,6 +108,8 @@
 
 @interface SPLRemoteObjectTest : XCTestCase
 
+@property (nonatomic, strong) NSDictionary *userInfo;
+
 @property (nonatomic, strong) SPLRemoteObjectProxyTestTarget *target;
 @property (nonatomic, strong) SPLRemoteObjectProxy *proxy;
 @property (nonatomic, strong) SPLRemoteObject<SampleProtocol> *remoteObject;
@@ -125,6 +127,11 @@
     static NSInteger testCounter = 0;
     testCounter++;
 
+    _userInfo = @{
+                  @"key": @"value",
+                  @"number": @5
+                  };
+
     NSString *type = [[NSString stringWithFormat:@"%@%ld", [[NSUUID UUID] UUIDString], (long)testCounter] MD5Digest];
     [Expecta setAsynchronousTestTimeout:10.0];
     
@@ -132,6 +139,8 @@
     self.proxy = [[SPLRemoteObjectProxy alloc] initWithName:@"object" type:type protocol:@protocol(SampleProtocol) target:self.target completionHandler:^(NSError *error) {
         
     }];
+    self.proxy.userInfo = self.userInfo;
+
     self.remoteObject = (id)[[SPLRemoteObject alloc] initWithName:@"object" type:type protocol:@protocol(SampleProtocol)];
 }
 
@@ -144,6 +153,11 @@
     self.remoteObject = nil;
 }
 
+- (void)testThatRemoteObjectInheritsUserInfo
+{
+    expect(self.remoteObject.userInfo).will.equal(self.userInfo);
+}
+
 - (void)testThatSPLRemoteObjectBrowserDiscoversRemoteObjects
 {
     SPLRemoteObjectBrowser *browser = [[SPLRemoteObjectBrowser alloc] initWithType:self.proxy.type protocol:self.proxy.protocol];
@@ -154,6 +168,7 @@
     expect(remoteObject.name).to.equal(self.remoteObject.name);
     expect(remoteObject.type).to.equal(self.remoteObject.type);
     expect(remoteObject.reachabilityStatus).will.equal(SPLRemoteObjectReachabilityStatusAvailable);
+    expect(remoteObject.userInfo).will.equal(self.userInfo);
 
     __block NSString *response = nil;
 
