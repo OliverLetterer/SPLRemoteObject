@@ -563,7 +563,7 @@ static void * SPLRemoteObjectObserver = &SPLRemoteObjectObserver;
                 _SPLRemoteObjectHostConnection *connection = [[_SPLRemoteObjectHostConnection alloc] initWithHostAddress:self.netService.hostName port:self.netService.port];
                 connection.completionBlock = completionBlock;
                 connection.delegate = self;
-                connection.shouldRetryIfConnectionFails = YES;
+                connection.shouldRetryIfConnectionFails = retry;
                 objc_setAssociatedObject(connection, &SPLRemoteObjectInvocationKey, anInvocation, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 
                 [_activeConnection addObject:connection];
@@ -620,7 +620,7 @@ static void * SPLRemoteObjectObserver = &SPLRemoteObjectObserver;
         fprintf(stderr, "%s: reconfirm record error: %d\n", getprogname(), (int) err);
         return NO;
     }
-    
+
     return YES;
 }
 
