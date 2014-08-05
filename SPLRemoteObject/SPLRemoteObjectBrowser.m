@@ -17,11 +17,9 @@
 
 
 
-@interface SPLRemoteObjectBrowser () <NSNetServiceBrowserDelegate> {
-    // not using mutableArrayValueForKey because of iOS bug forwarding addObject: to self.remoteObjects
-    NSMutableArray *_remoteObjects;
-}
+@interface SPLRemoteObjectBrowser () <NSNetServiceBrowserDelegate>
 
+@property (nonatomic, readonly) NSMutableArray *mutableRemoteObjects;
 @property (nonatomic, strong) NSNetServiceBrowser *netServiceBrowser;
 
 @end
@@ -43,6 +41,11 @@
 }
 
 #pragma mark - setters and getters
+
+- (NSMutableArray *)mutableRemoteObjects
+{
+    return [self mutableArrayValueForKey:NSStringFromSelector(@selector(remoteObjects))];
+}
 
 #pragma mark - Initialization
 
@@ -71,10 +74,7 @@
 - (void)netServiceBrowser:(NSNetServiceBrowser *)netServiceBrowser didFindService:(NSNetService *)netService moreComing:(BOOL)moreComing
 {
     SPLRemoteObject *remoteObject = [[SPLRemoteObject alloc] initWithNetService:netService type:self.type protocol:self.protocol];
-
-    [self willChangeValueForKey:@"remoteObjects"];
-    [_remoteObjects addObject:remoteObject];
-    [self didChangeValueForKey:@"remoteObjects"];
+    [self.mutableRemoteObjects addObject:remoteObject];
 }
 
 - (void)netServiceBrowser:(NSNetServiceBrowser *)aNetServiceBrowser didNotSearch:(NSDictionary *)errorDict
@@ -90,9 +90,7 @@
     }];
 
     if (index != NSNotFound) {
-        [self willChangeValueForKey:@"remoteObjects"];
-        [_remoteObjects removeObjectAtIndex:index];
-        [self didChangeValueForKey:@"remoteObjects"];
+        [self.mutableRemoteObjects removeObjectAtIndex:index];
     }
 }
 
@@ -106,10 +104,7 @@
 - (void)_applicationDidEnterBackgroundCallback:(NSNotification *)notification
 {
     [self.netServiceBrowser stop];
-    
-    [self willChangeValueForKey:@"remoteObjects"];
-    [_remoteObjects removeAllObjects];
-    [self didChangeValueForKey:@"remoteObjects"];
+    [self.mutableRemoteObjects removeAllObjects];
 }
 
 #pragma mark - Private category implementation ()
