@@ -185,6 +185,11 @@ static void * SPLRemoteObjectObserver = &SPLRemoteObjectObserver;
     }
 }
 
+- (BOOL)conformsToProtocol:(Protocol *)aProtocol
+{
+    return [super conformsToProtocol:aProtocol] || aProtocol == self.protocol;
+}
+
 #pragma mark - Initialization
 
 - (instancetype)initWithNetService:(NSNetService *)netService type:(NSString *)type protocol:(Protocol *)protocol
