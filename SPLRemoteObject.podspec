@@ -11,5 +11,6 @@ Pod::Spec.new do |spec|
   spec.author       = { 'Oliver Letterer' => 'oliver.letterer@gmail.com' }
   spec.source_files = 'SPLRemoteObject'
 
+  spec.dependency 'SPLNetService', '~> 0.1.0'
   spec.dependency 'SLObjectiveCRuntimeAdditions', '>= 1.0.0'
 end

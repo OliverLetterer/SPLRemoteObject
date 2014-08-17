@@ -1,7 +1,7 @@
 FRAMEWORK_SEARCH_PATHS = $(inherited) "$(SDKROOT)/Developer/Library/Frameworks"
 GCC_PREPROCESSOR_DEFINITIONS = $(inherited) COCOAPODS=1
-HEADER_SEARCH_PATHS = "${PODS_ROOT}/Headers" "${PODS_ROOT}/Headers/CTOpenSSLWrapper" "${PODS_ROOT}/Headers/Expecta" "${PODS_ROOT}/Headers/OCMock" "${PODS_ROOT}/Headers/OpenSSL-Universal" "${PODS_ROOT}/Headers/OpenSSL-Universal/openssl" "${PODS_ROOT}/Headers/SLObjectiveCRuntimeAdditions" "${PODS_ROOT}/Headers/SPLRemoteObject"
+HEADER_SEARCH_PATHS = "${PODS_ROOT}/Headers" "${PODS_ROOT}/Headers/CTOpenSSLWrapper" "${PODS_ROOT}/Headers/Expecta" "${PODS_ROOT}/Headers/OCMock" "${PODS_ROOT}/Headers/OpenSSL-Universal" "${PODS_ROOT}/Headers/OpenSSL-Universal/openssl" "${PODS_ROOT}/Headers/SLObjectiveCRuntimeAdditions" "${PODS_ROOT}/Headers/SPLNetService" "${PODS_ROOT}/Headers/SPLRemoteObject"
 LIBRARY_SEARCH_PATHS = "$(PODS_ROOT)/OpenSSL-Universal/lib-ios" "$(PODS_ROOT)/OpenSSL-Universal/lib-ios"
-OTHER_CFLAGS = $(inherited) -isystem "${PODS_ROOT}/Headers" -isystem "${PODS_ROOT}/Headers/CTOpenSSLWrapper" -isystem "${PODS_ROOT}/Headers/Expecta" -isystem "${PODS_ROOT}/Headers/OCMock" -isystem "${PODS_ROOT}/Headers/OpenSSL-Universal" -isystem "${PODS_ROOT}/Headers/OpenSSL-Universal/openssl" -isystem "${PODS_ROOT}/Headers/SLObjectiveCRuntimeAdditions" -isystem "${PODS_ROOT}/Headers/SPLRemoteObject"
+OTHER_CFLAGS = $(inherited) -isystem "${PODS_ROOT}/Headers" -isystem "${PODS_ROOT}/Headers/CTOpenSSLWrapper" -isystem "${PODS_ROOT}/Headers/Expecta" -isystem "${PODS_ROOT}/Headers/OCMock" -isystem "${PODS_ROOT}/Headers/OpenSSL-Universal" -isystem "${PODS_ROOT}/Headers/OpenSSL-Universal/openssl" -isystem "${PODS_ROOT}/Headers/SLObjectiveCRuntimeAdditions" -isystem "${PODS_ROOT}/Headers/SPLNetService" -isystem "${PODS_ROOT}/Headers/SPLRemoteObject"
 OTHER_LDFLAGS = -ObjC -lcrypto -lssl -framework CFNetwork -framework Foundation -framework Security -framework UIKit -framework XCTest
 PODS_ROOT = ${SRCROOT}/Pods

@@ -35,6 +35,7 @@
 @interface SPLRemoteObject : NSObject
 
 + (NSDictionary *)userInfoFromTXTRecordData:(NSData *)txtData;
+@property (nonatomic, copy, readonly) NSDictionary *userInfo;
 
 @property (nonatomic, readonly) NSString *name;
 @property (nonatomic, readonly) NSString *type;
@@ -43,8 +44,6 @@
 @property (nonatomic, assign) NSTimeInterval timeoutInterval;
 @property (strong) id<SPLRemoteObjectEncryptionPolicy> encryptionPolicy;
 @property (nonatomic, readonly) SPLRemoteObjectReachabilityStatus reachabilityStatus;
-
-@property (nonatomic, copy, readonly) NSDictionary *userInfo;
 
 - (instancetype)init UNAVAILABLE_ATTRIBUTE;
 - (instancetype)initWithName:(NSString *)name type:(NSString *)type protocol:(Protocol *)protocol;

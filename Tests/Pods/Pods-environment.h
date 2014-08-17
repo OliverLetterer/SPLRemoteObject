@@ -37,9 +37,15 @@
 #define COCOAPODS_VERSION_MINOR_SLObjectiveCRuntimeAdditions 1
 #define COCOAPODS_VERSION_PATCH_SLObjectiveCRuntimeAdditions 4
 
+// SPLNetService
+#define COCOAPODS_POD_AVAILABLE_SPLNetService
+#define COCOAPODS_VERSION_MAJOR_SPLNetService 0
+#define COCOAPODS_VERSION_MINOR_SPLNetService 1
+#define COCOAPODS_VERSION_PATCH_SPLNetService 0
+
 // SPLRemoteObject
 #define COCOAPODS_POD_AVAILABLE_SPLRemoteObject
 #define COCOAPODS_VERSION_MAJOR_SPLRemoteObject 2
 #define COCOAPODS_VERSION_MINOR_SPLRemoteObject 0
-#define COCOAPODS_VERSION_PATCH_SPLRemoteObject 0
+#define COCOAPODS_VERSION_PATCH_SPLRemoteObject 7
 

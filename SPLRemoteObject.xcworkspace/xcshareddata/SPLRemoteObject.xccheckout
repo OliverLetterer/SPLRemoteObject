@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>47A8B22B-D1EF-49E7-B1EA-B8A6FD1F6EB0</string>
+	<key>IDESourceControlProjectName</key>
+	<string>SPLRemoteObject</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>C1FCE68D97FE4421E3679A8E9C117D6F650B5FD5</key>
+		<string>github.com:OliverLetterer/SLRemoteObject.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>SPLRemoteObject.xcworkspace</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>C1FCE68D97FE4421E3679A8E9C117D6F650B5FD5</key>
+		<string>..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>github.com:OliverLetterer/SLRemoteObject.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>111</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>C1FCE68D97FE4421E3679A8E9C117D6F650B5FD5</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>C1FCE68D97FE4421E3679A8E9C117D6F650B5FD5</string>
+			<key>IDESourceControlWCCName</key>
+			<string>SLRemoteObject</string>
+		</dict>
+	</array>
+</dict>
+</plist>

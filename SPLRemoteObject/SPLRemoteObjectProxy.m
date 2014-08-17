@@ -37,6 +37,7 @@
 #import "SPLRemoteObject.h"
 #import "_SPLIncompatibleResponse.h"
 #import <objc/runtime.h>
+#import <SPLNetService.h>
 
 
 
@@ -44,13 +45,13 @@ void SPLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBa
 
 
 
-@interface SPLRemoteObjectProxy () <NSNetServiceDelegate, _SPLRemoteObjectConnectionDelegate>
+@interface SPLRemoteObjectProxy () <SPLNetServiceDelegate, _SPLRemoteObjectConnectionDelegate>
 
 @property (nonatomic, copy) SPLRemoteObjectErrorBlock completionHandler;
 
 @property (nonatomic, assign) CFSocketRef socket; // retained
 @property (nonatomic, assign) uint16_t port;
-@property (nonatomic, strong) NSNetService *netService;
+@property (nonatomic, strong) SPLNetService *netService;
 
 @property (nonatomic, readonly) NSMutableArray *openConnections;
 
@@ -92,8 +93,7 @@ void SPLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBa
     if (userInfo != _userInfo) {
         _userInfo = [userInfo copy];
         if (self.netService) {
-            BOOL success = [self.netService setTXTRecordData:[SPLRemoteObjectProxy dataFromUserInfoDictionary:userInfo]];
-            NSParameterAssert(success);
+            [self.netService setTXTRecordData:[SPLRemoteObjectProxy dataFromUserInfoDictionary:userInfo]];
         }
     }
 }
@@ -195,16 +195,16 @@ void SPLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBa
     [self _unpublishService];
 }
 
-#pragma mark - NSNetServiceDelegate
+#pragma mark - SPLNetServiceDelegate
 
-- (void)netServiceDidPublish:(NSNetService *)sender
+- (void)netServiceDidPublish:(SPLNetService *)sender
 {
     if (_completionHandler) {
         _completionHandler(nil), _completionHandler = nil;
     }
 }
 
-- (void)netService:(NSNetService *)sender didNotPublish:(NSDictionary *)errorDict
+- (void)netService:(SPLNetService *)sender didNotPublish:(NSDictionary *)errorDict
 {
     BOOL wasRunning = _isServerRunning && !_completionHandler;
 
@@ -394,12 +394,11 @@ void SPLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBa
 
 - (void)_publishService
 {
-    _netService = [[NSNetService alloc] initWithDomain:@"" type:[self.type netServiceTypeWithProtocol:self.protocol] name:self.name port:_port];
+    _netService = [[SPLNetService alloc] initWithDomain:@"" type:[self.type netServiceTypeWithProtocol:self.protocol] name:self.name port:_port];
     [_netService scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
     _netService.delegate = self;
     if (self.userInfo) {
-        BOOL success = [_netService setTXTRecordData:[NSNetService dataFromTXTRecordDictionary:self.userInfo]];
-        NSParameterAssert(success);
+        [_netService setTXTRecordData:[SPLRemoteObjectProxy dataFromUserInfoDictionary:self.userInfo]];
     }
 	[_netService publish];
 }

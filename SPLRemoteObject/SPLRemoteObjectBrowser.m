@@ -9,18 +9,20 @@
 #import "SPLRemoteObjectBrowser.h"
 #import "SPLRemoteObject.h"
 #import "NSString+SPLRemoteObject.h"
+#import <SPLNetService.h>
+#import <SPLNetServiceBrowser.h>
 
 @interface SPLRemoteObject ()
-@property (nonatomic, readonly) NSNetService *netService;
-- (instancetype)initWithNetService:(NSNetService *)netService type:(NSString *)type protocol:(Protocol *)protocol;
+@property (nonatomic, readonly) SPLNetService *netService;
+- (instancetype)initWithNetService:(SPLNetService *)netService type:(NSString *)type protocol:(Protocol *)protocol;
 @end
 
 
 
-@interface SPLRemoteObjectBrowser () <NSNetServiceBrowserDelegate>
+@interface SPLRemoteObjectBrowser () <SPLNetServiceBrowserDelegate>
 
 @property (nonatomic, readonly) NSMutableArray *mutableRemoteObjects;
-@property (nonatomic, strong) NSNetServiceBrowser *netServiceBrowser;
+@property (nonatomic, strong) SPLNetServiceBrowser *netServiceBrowser;
 
 @end
 
@@ -57,7 +59,7 @@
 
         _remoteObjects = [NSMutableArray array];
 
-        _netServiceBrowser = [[NSNetServiceBrowser alloc] init];
+        _netServiceBrowser = [[SPLNetServiceBrowser alloc] init];
         _netServiceBrowser.delegate = self;
         [_netServiceBrowser scheduleInRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
 
@@ -69,21 +71,21 @@
     return self;
 }
 
-#pragma mark - NSNetServiceBrowserDelegate
+#pragma mark - SPLNetServiceBrowserDelegate
 
-- (void)netServiceBrowser:(NSNetServiceBrowser *)netServiceBrowser didFindService:(NSNetService *)netService moreComing:(BOOL)moreComing
+- (void)netServiceBrowser:(SPLNetServiceBrowser *)netServiceBrowser didFindService:(SPLNetService *)netService moreComing:(BOOL)moreComing
 {
     SPLRemoteObject *remoteObject = [[SPLRemoteObject alloc] initWithNetService:netService type:self.type protocol:self.protocol];
     [self.mutableRemoteObjects addObject:remoteObject];
 }
 
-- (void)netServiceBrowser:(NSNetServiceBrowser *)aNetServiceBrowser didNotSearch:(NSDictionary *)errorDict
+- (void)netServiceBrowser:(SPLNetServiceBrowser *)aNetServiceBrowser didNotSearch:(NSDictionary *)errorDict
 {
     NSLog(@"%@", errorDict);
     NSParameterAssert(NO);
 }
 
-- (void)netServiceBrowser:(NSNetServiceBrowser *)aNetServiceBrowser didRemoveService:(NSNetService *)aNetService moreComing:(BOOL)moreComing
+- (void)netServiceBrowser:(SPLNetServiceBrowser *)aNetServiceBrowser didRemoveService:(SPLNetService *)aNetService moreComing:(BOOL)moreComing
 {
     NSInteger index = [self.remoteObjects indexOfObjectPassingTest:^BOOL(SPLRemoteObject *remoteObject, NSUInteger idx, BOOL *stop) {
         return remoteObject.netService == aNetService;

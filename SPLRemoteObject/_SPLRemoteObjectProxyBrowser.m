@@ -28,14 +28,16 @@
 #import "SPLRemoteObject.h"
 #import <UIKit/UIKit.h>
 #import <Foundation/Foundation.h>
+#import <SPLNetService.h>
+#import <SPLNetServiceBrowser.h>
 
 
 
-@interface _SPLRemoteObjectProxyBrowser () <NSNetServiceBrowserDelegate, NSNetServiceDelegate>
+@interface _SPLRemoteObjectProxyBrowser () <SPLNetServiceBrowserDelegate, SPLNetServiceDelegate>
 
-@property (nonatomic, strong) NSNetService *resolvedNetService;
-@property (nonatomic, strong) NSNetService *discoveringNetService;
-@property (nonatomic, strong) NSNetServiceBrowser *netServiceBrowser;
+@property (nonatomic, strong) SPLNetService *resolvedNetService;
+@property (nonatomic, strong) SPLNetService *discoveringNetService;
+@property (nonatomic, strong) SPLNetServiceBrowser *netServiceBrowser;
 
 @property (nonatomic, copy) NSDictionary *userInfo;
 
@@ -53,7 +55,7 @@
         _name = name;
         _netServiceType = netServiceType;
 
-        _netServiceBrowser = [[NSNetServiceBrowser alloc] init];
+        _netServiceBrowser = [[SPLNetServiceBrowser alloc] init];
         _netServiceBrowser.delegate = self;
         [_netServiceBrowser scheduleInRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
         
@@ -102,9 +104,9 @@
     [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
-#pragma mark - NSNetServiceDelegate
+#pragma mark - SPLNetServiceDelegate
 
-- (void)netServiceDidResolveAddress:(NSNetService *)sender
+- (void)netServiceDidResolveAddress:(SPLNetService *)sender
 {
     if (sender == self.discoveringNetService) {
         self.discoveringNetService = nil;
@@ -112,20 +114,20 @@
     }
 }
 
-- (void)netService:(NSNetService *)sender didNotResolve:(NSDictionary *)errorDict
+- (void)netService:(SPLNetService *)sender didNotResolve:(NSDictionary *)errorDict
 {
     self.discoveringNetService = nil;
     self.resolvedNetService = nil;
 }
 
-- (void)netService:(NSNetService *)sender didUpdateTXTRecordData:(NSData *)data
+- (void)netService:(SPLNetService *)sender didUpdateTXTRecordData:(NSData *)data
 {
     self.userInfo = [SPLRemoteObject userInfoFromTXTRecordData:data];
 }
 
-#pragma mark - NSNetServiceBrowserDelegate
+#pragma mark - SPLNetServiceBrowserDelegate
 
-- (void)netServiceBrowser:(NSNetServiceBrowser *)netServiceBrowser didFindService:(NSNetService *)netService moreComing:(BOOL)moreComing
+- (void)netServiceBrowser:(SPLNetServiceBrowser *)netServiceBrowser didFindService:(SPLNetService *)netService moreComing:(BOOL)moreComing
 {
     if (![netService.name isEqual:self.name]) {
         return;
@@ -144,7 +146,7 @@
     [netService startMonitoring];
 }
 
-- (void)netServiceBrowser:(NSNetServiceBrowser *)netServiceBrowser didRemoveService:(NSNetService *)netService moreComing:(BOOL)moreComing
+- (void)netServiceBrowser:(SPLNetServiceBrowser *)netServiceBrowser didRemoveService:(SPLNetService *)netService moreComing:(BOOL)moreComing
 {
     if (![netService.name isEqual:self.name]) {
         return;

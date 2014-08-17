@@ -24,6 +24,8 @@
 //  THE SOFTWARE.
 //
 
+#import <SPLNetService.h>
+
 @class _SPLRemoteObjectProxyBrowser;
 
 
@@ -38,7 +40,7 @@
 @property (nonatomic, readonly) NSString *name;
 @property (nonatomic, readonly) NSString *netServiceType;
 
-@property (nonatomic, readonly) NSNetService *resolvedNetService;
+@property (nonatomic, readonly) SPLNetService *resolvedNetService;
 
 - (instancetype)initWithName:(NSString *)name netServiceType:(NSString *)netServiceType;
 
