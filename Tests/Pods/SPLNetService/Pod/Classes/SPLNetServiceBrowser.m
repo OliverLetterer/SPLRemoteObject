@@ -36,6 +36,11 @@ static NSDictionary *CFStreamErrorGetDictionary(CFStreamError error)
 
 
 @interface SPLNetServiceBrowser ()
+
+@property (nonatomic, readonly) BOOL isSearching;
+@property (nonatomic, assign) BOOL isSearchingForNetServices;
+@property (nonatomic, assign) BOOL isSearchingForDomains;
+
 @property (nonatomic, assign) CFNetServiceBrowserRef browser;
 @property (nonatomic, strong) NSMutableArray *discoveredNetServices;
 
@@ -58,25 +63,29 @@ static void _SPLNetServiceBrowserBrowserCallback(CFNetServiceBrowserRef browser,
 
     SPLNetServiceBrowser *self = (__bridge id)info;
 
-    if (error && error->domain != 0) {
-        if ([self.delegate respondsToSelector:@selector(netServiceBrowser:didNotSearch:)]) {
+    if (error && error->error != 0) {
+        if (self.isSearching && [self.delegate respondsToSelector:@selector(netServiceBrowser:didNotSearch:)]) {
             [self.delegate netServiceBrowser:self didNotSearch:CFStreamErrorGetDictionary(*error)];
         }
         return;
     }
 
     if (isNormalDomain) {
-        if (shoudRemove) {
-            [self _didRemoveDomain:(__bridge id)domainOrService moreComing:moreComing];
-        } else {
-            [self _didFindDomain:(__bridge id)domainOrService moreComing:moreComing];
+        if (self.isSearchingForDomains) {
+            if (shoudRemove) {
+                [self _didRemoveDomain:(__bridge id)domainOrService moreComing:moreComing];
+            } else {
+                [self _didFindDomain:(__bridge id)domainOrService moreComing:moreComing];
+            }
         }
     } else if (isNetService) {
-        CFNetServiceRef netService = (CFNetServiceRef)domainOrService;
-        if (shoudRemove) {
-            [self _didRemoveNetService:netService moreComing:moreComing];
-        } else {
-            [self _didFindNetService:netService moreComing:moreComing];
+        if (self.isSearchingForNetServices) {
+            CFNetServiceRef netService = (CFNetServiceRef)domainOrService;
+            if (shoudRemove) {
+                [self _didRemoveNetService:netService moreComing:moreComing];
+            } else {
+                [self _didFindNetService:netService moreComing:moreComing];
+            }
         }
     } else {
         NSCParameterAssert(NO);
@@ -88,6 +97,11 @@ static void _SPLNetServiceBrowserBrowserCallback(CFNetServiceBrowserRef browser,
 @implementation SPLNetServiceBrowser
 
 #pragma mark - setters and getters
+
+- (BOOL)isSearching
+{
+    return self.isSearchingForNetServices || self.isSearchingForDomains;
+}
 
 - (void)setBrowser:(CFNetServiceBrowserRef)browser
 {
@@ -137,6 +151,9 @@ static void _SPLNetServiceBrowserBrowserCallback(CFNetServiceBrowserRef browser,
     CFStreamError error;
     CFNetServiceBrowserStopSearch(self.browser, &error);
 
+    self.isSearchingForNetServices = NO;
+    self.isSearchingForDomains = NO;
+
     if (error.domain == 0 && [self.delegate respondsToSelector:@selector(netServiceBrowserDidStopSearch:)]) {
         [self.delegate netServiceBrowserDidStopSearch:self];
     }
@@ -150,10 +167,13 @@ static void _SPLNetServiceBrowserBrowserCallback(CFNetServiceBrowserRef browser,
 
     CFStreamError error;
     Boolean success = CFNetServiceBrowserSearchForDomains(self.browser, false, &error);
+
     if (!success) {
         if ([self.delegate respondsToSelector:@selector(netServiceBrowser:didNotSearch:)]) {
             [self.delegate netServiceBrowser:self didNotSearch:CFStreamErrorGetDictionary(error)];
         }
+    } else {
+        self.isSearchingForDomains = YES;
     }
 }
 
@@ -165,10 +185,13 @@ static void _SPLNetServiceBrowserBrowserCallback(CFNetServiceBrowserRef browser,
 
     CFStreamError error;
     Boolean success = CFNetServiceBrowserSearchForDomains(self.browser, true, &error);
+
     if (!success) {
         if ([self.delegate respondsToSelector:@selector(netServiceBrowser:didNotSearch:)]) {
             [self.delegate netServiceBrowser:self didNotSearch:CFStreamErrorGetDictionary(error)];
         }
+    } else {
+        self.isSearchingForDomains = YES;
     }
 }
 
@@ -180,10 +203,13 @@ static void _SPLNetServiceBrowserBrowserCallback(CFNetServiceBrowserRef browser,
 
     CFStreamError error;
     Boolean success = CFNetServiceBrowserSearchForServices(self.browser, (__bridge CFStringRef)domainString, (__bridge CFStringRef)type, &error);
+
     if (!success) {
         if ([self.delegate respondsToSelector:@selector(netServiceBrowser:didNotSearch:)]) {
             [self.delegate netServiceBrowser:self didNotSearch:CFStreamErrorGetDictionary(error)];
         }
+    } else {
+        self.isSearchingForNetServices = YES;
     }
 }
 
