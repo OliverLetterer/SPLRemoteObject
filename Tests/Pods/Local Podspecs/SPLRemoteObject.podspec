@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
   spec.name         = 'SPLRemoteObject'
-  spec.version      = '2.0.7'
+  spec.version      = '2.0.9'
   spec.platform     = :ios, '7.0'
   spec.license      = 'MIT'
   spec.source       = { :git => 'https://github.com/OliverLetterer/SPLRemoteObject.git', :tag => spec.version.to_s }
@@ -11,6 +11,6 @@ Pod::Spec.new do |spec|
   spec.author       = { 'Oliver Letterer' => 'oliver.letterer@gmail.com' }
   spec.source_files = 'SPLRemoteObject'
 
-  spec.dependency 'SPLNetService', '~> 0.1.0'
+  spec.dependency 'SPLNetService', '~> 0.1.1'
   spec.dependency 'SLObjectiveCRuntimeAdditions', '>= 1.0.0'
 end

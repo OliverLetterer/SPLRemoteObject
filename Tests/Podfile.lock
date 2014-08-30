@@ -2,13 +2,13 @@ PODS:
   - CTOpenSSLWrapper (1.2.1):
     - OpenSSL-Universal (= 1.0.1.h)
   - Expecta (0.3.1)
-  - OCMock (3.0.2)
+  - OCMock (3.1.1)
   - OpenSSL-Universal (1.0.1.h)
   - SLObjectiveCRuntimeAdditions (1.1.4)
-  - SPLNetService (0.1.0)
-  - SPLRemoteObject (2.0.7):
+  - SPLNetService (0.1.1)
+  - SPLRemoteObject (2.0.9):
     - SLObjectiveCRuntimeAdditions (>= 1.0.0)
-    - SPLNetService (~> 0.1.0)
+    - SPLNetService (~> 0.1.1)
 
 DEPENDENCIES:
   - CTOpenSSLWrapper (~> 1.2.1)
@@ -23,10 +23,10 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   CTOpenSSLWrapper: 51c8d1e9f238da4a54edf7182ea6122e50450f5a
   Expecta: 03aabd0a89d8dea843baecb19a7fd7466a69a31d
-  OCMock: b9836ab89d8d5e66cbe6333f93857037c310ee62
+  OCMock: f6cb8c162ab9d5620dddf411282c7b2c0ee78854
   OpenSSL-Universal: 9c112508615ed33bb35f730eed820e93175a9dec
   SLObjectiveCRuntimeAdditions: 53a3d05059b6b30fffcd91c62fe676ae969e1c71
-  SPLNetService: fbaf03600b379cb1820c01d6f38db554aae13381
-  SPLRemoteObject: f87aecdbd8ea9e53ee4b5b926cca93a105836b1b
+  SPLNetService: a171ea90d1699454d731f8c6768c472e85e817a4
+  SPLRemoteObject: a9d35a2e699a9af7e183b57cd7a70b80f0a015fb
 
 COCOAPODS: 0.33.1

@@ -160,7 +160,7 @@
 
 - (void)testThatSPLRemoteObjectBrowserDiscoversRemoteObjects
 {
-    SPLRemoteObjectBrowser *browser = [[SPLRemoteObjectBrowser alloc] initWithType:self.proxy.type protocol:self.proxy.protocol];
+    SPLRemoteObjectBrowser *browser = [[SPLRemoteObjectBrowser alloc] initWithType:self.proxy.type protocol:self.proxy.protocol encryptionPolicy:nil];
     expect(browser.remoteObjects).will.haveCountOf(1);
 
     SPLRemoteObject<SampleProtocol> *remoteObject = browser.remoteObjects.firstObject;

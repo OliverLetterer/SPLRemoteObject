@@ -16,22 +16,8 @@
 
 #import <Foundation/Foundation.h>
 
-@interface OCMInvocationMatcher : NSObject
-{
-    NSInvocation *recordedInvocation;
-    BOOL         recordedAsClassMethod;
-    BOOL         ignoreNonObjectArgs;
-}
+@interface NSValue(OCMAdditions)
 
-- (void)setInvocation:(NSInvocation *)anInvocation;
-- (NSInvocation *)recordedInvocation;
-
-- (void)setRecordedAsClassMethod:(BOOL)flag;
-- (BOOL)recordedAsClassMethod;
-
-- (void)setIgnoreNonObjectArgs:(BOOL)flag;
-
-- (BOOL)matchesSelector:(SEL)aSelector;
-- (BOOL)matchesInvocation:(NSInvocation *)anInvocation;
+- (BOOL)getBytes:(void *)outputBuf objCType:(const char *)targetType;
 
 @end

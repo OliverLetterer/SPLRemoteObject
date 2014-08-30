@@ -208,11 +208,21 @@ static void _SPLNetServiceBrowserBrowserCallback(CFNetServiceBrowserRef browser,
     SPLNetService *netService = [[SPLNetService alloc] initWithCFNetService:netServiceRef];
 
     NSInteger existingIndex = [self.discoveredNetServices indexOfObject:netService];
-    NSParameterAssert(existingIndex == NSNotFound);
+    if (existingIndex != NSNotFound) {
+        if ([self.delegate respondsToSelector:@selector(netServiceBrowser:didRemoveService:moreComing:)]) {
+            SPLNetService *existingService = self.discoveredNetServices[existingIndex];
+            [self.delegate netServiceBrowser:self didRemoveService:existingService moreComing:moreComing];
+        }
 
-    [self.discoveredNetServices addObject:netService];
-    if ([self.delegate respondsToSelector:@selector(netServiceBrowser:didFindService:moreComing:)]) {
-        [self.delegate netServiceBrowser:self didFindService:netService moreComing:moreComing];
+        [self.discoveredNetServices replaceObjectAtIndex:existingIndex withObject:netService];
+        if ([self.delegate respondsToSelector:@selector(netServiceBrowser:didFindService:moreComing:)]) {
+            [self.delegate netServiceBrowser:self didFindService:netService moreComing:moreComing];
+        }
+    } else {
+        [self.discoveredNetServices addObject:netService];
+        if ([self.delegate respondsToSelector:@selector(netServiceBrowser:didFindService:moreComing:)]) {
+            [self.delegate netServiceBrowser:self didFindService:netService moreComing:moreComing];
+        }
     }
 }
 

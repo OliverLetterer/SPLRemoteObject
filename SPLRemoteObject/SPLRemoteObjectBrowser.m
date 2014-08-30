@@ -51,11 +51,12 @@
 
 #pragma mark - Initialization
 
-- (id)initWithType:(NSString *)type protocol:(Protocol *)protocol
+- (instancetype)initWithType:(NSString *)type protocol:(Protocol *)protocol encryptionPolicy:(id<SPLRemoteObjectEncryptionPolicy>)encryptionPolicy
 {
     if (self = [super init]) {
         _type = type;
         _protocol = protocol;
+        _encryptionPolicy = encryptionPolicy;
 
         _remoteObjects = [NSMutableArray array];
 
@@ -71,11 +72,18 @@
     return self;
 }
 
+- (void)dealloc
+{
+    _netServiceBrowser.delegate = nil;
+    [_netServiceBrowser removeFromRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
+}
+
 #pragma mark - SPLNetServiceBrowserDelegate
 
 - (void)netServiceBrowser:(SPLNetServiceBrowser *)netServiceBrowser didFindService:(SPLNetService *)netService moreComing:(BOOL)moreComing
 {
     SPLRemoteObject *remoteObject = [[SPLRemoteObject alloc] initWithNetService:netService type:self.type protocol:self.protocol];
+    remoteObject.encryptionPolicy = self.encryptionPolicy;
     [self.mutableRemoteObjects addObject:remoteObject];
 }
 

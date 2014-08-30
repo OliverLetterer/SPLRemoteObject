@@ -6,6 +6,8 @@
 //  Copyright 2014 __MyCompanyName__. All rights reserved.
 //
 
+@protocol SPLRemoteObjectEncryptionPolicy;
+
 
 
 /**
@@ -15,10 +17,11 @@
 
 @property (nonatomic, readonly) NSString *type;
 @property (nonatomic, readonly) Protocol *protocol;
+@property (nonatomic, readonly) id<SPLRemoteObjectEncryptionPolicy> encryptionPolicy;
 
 @property (nonatomic, readonly) NSArray *remoteObjects;
 
 - (instancetype)init UNAVAILABLE_ATTRIBUTE;
-- (instancetype)initWithType:(NSString *)type protocol:(Protocol *)protocol;
+- (instancetype)initWithType:(NSString *)type protocol:(Protocol *)protocol encryptionPolicy:(id<SPLRemoteObjectEncryptionPolicy>)encryptionPolicy;
 
 @end
