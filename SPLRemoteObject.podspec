@@ -1,6 +1,6 @@
 Pod::Spec.new do |spec|
   spec.name         = 'SPLRemoteObject'
-  spec.version      = '2.0.9'
+  spec.version      = '2.0.10'
   spec.platform     = :ios, '7.0'
   spec.license      = 'MIT'
   spec.source       = { :git => 'https://github.com/OliverLetterer/SPLRemoteObject.git', :tag => spec.version.to_s }
