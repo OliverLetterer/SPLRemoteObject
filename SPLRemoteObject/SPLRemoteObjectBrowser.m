@@ -76,6 +76,8 @@
 {
     _netServiceBrowser.delegate = nil;
     [_netServiceBrowser removeFromRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
+
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
 }
 
 #pragma mark - SPLNetServiceBrowserDelegate
