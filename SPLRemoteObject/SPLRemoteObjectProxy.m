@@ -222,14 +222,14 @@ void SPLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBa
         });
     }
 
-    NSLog(@"net service did not publish: %@", errorDict);
+    NSLog(@"[%@] net service did not publish: %@", NSStringFromSelector(_cmd), errorDict);
 }
 
 #pragma mark - SPLRemoteObjectConnectionDelegate
 
 - (void)remoteObjectConnectionConnectionAttemptFailed:(_SPLRemoteObjectConnection *)connection
 {
-    NSLog(@"%@ connection attempt failed", self);
+    NSLog(@"[%@] %@ connection attempt failed", NSStringFromSelector(_cmd), self);
 
     NSMutableArray *optionConnections = _openConnections;
     dispatch_async(dispatch_get_main_queue(), ^(void) {

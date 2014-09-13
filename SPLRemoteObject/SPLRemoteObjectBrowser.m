@@ -82,6 +82,14 @@
 
 - (void)netServiceBrowser:(NSNetServiceBrowser *)netServiceBrowser didFindService:(NSNetService *)netService moreComing:(BOOL)moreComing
 {
+    NSInteger index = [self.remoteObjects indexOfObjectPassingTest:^BOOL(SPLRemoteObject *remoteObject, NSUInteger idx, BOOL *stop) {
+        return [remoteObject.netService isEqual:netService];
+    }];
+
+    if (index != NSNotFound) {
+        return;
+    }
+
     SPLRemoteObject *remoteObject = [[SPLRemoteObject alloc] initWithNetService:netService type:self.type protocol:self.protocol];
     remoteObject.encryptionPolicy = self.encryptionPolicy;
     [self.mutableRemoteObjects addObject:remoteObject];
@@ -89,7 +97,7 @@
 
 - (void)netServiceBrowser:(NSNetServiceBrowser *)aNetServiceBrowser didNotSearch:(NSDictionary *)errorDict
 {
-    NSLog(@"%@", errorDict);
+    NSLog(@"[%@] %@", NSStringFromSelector(_cmd), errorDict);
     NSParameterAssert(NO);
 }
 
@@ -101,6 +109,8 @@
 
     if (index != NSNotFound) {
         [self.mutableRemoteObjects removeObjectAtIndex:index];
+    } else {
+        NSLog(@"[%@] removed NSNotFound service: %@", NSStringFromSelector(_cmd), aNetService);
     }
 }
 
