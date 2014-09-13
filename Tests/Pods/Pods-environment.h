@@ -10,7 +10,7 @@
 #define COCOAPODS_POD_AVAILABLE_CTOpenSSLWrapper
 #define COCOAPODS_VERSION_MAJOR_CTOpenSSLWrapper 1
 #define COCOAPODS_VERSION_MINOR_CTOpenSSLWrapper 2
-#define COCOAPODS_VERSION_PATCH_CTOpenSSLWrapper 1
+#define COCOAPODS_VERSION_PATCH_CTOpenSSLWrapper 2
 
 // Expecta
 #define COCOAPODS_POD_AVAILABLE_Expecta
@@ -29,7 +29,7 @@
 // This library does not follow semantic-versioning,
 // so we were not able to define version macros.
 // Please contact the author.
-// Version: 1.0.1.h.
+// Version: 1.0.1.i.
 
 // SLObjectiveCRuntimeAdditions
 #define COCOAPODS_POD_AVAILABLE_SLObjectiveCRuntimeAdditions
@@ -37,15 +37,9 @@
 #define COCOAPODS_VERSION_MINOR_SLObjectiveCRuntimeAdditions 1
 #define COCOAPODS_VERSION_PATCH_SLObjectiveCRuntimeAdditions 4
 
-// SPLNetService
-#define COCOAPODS_POD_AVAILABLE_SPLNetService
-#define COCOAPODS_VERSION_MAJOR_SPLNetService 0
-#define COCOAPODS_VERSION_MINOR_SPLNetService 1
-#define COCOAPODS_VERSION_PATCH_SPLNetService 1
-
 // SPLRemoteObject
 #define COCOAPODS_POD_AVAILABLE_SPLRemoteObject
 #define COCOAPODS_VERSION_MAJOR_SPLRemoteObject 2
 #define COCOAPODS_VERSION_MINOR_SPLRemoteObject 0
-#define COCOAPODS_VERSION_PATCH_SPLRemoteObject 9
+#define COCOAPODS_VERSION_PATCH_SPLRemoteObject 12
 

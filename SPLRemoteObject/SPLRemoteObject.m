@@ -118,14 +118,14 @@ static BOOL signatureMatches(const char *signature1, const char *signature2)
 
 static void * SPLRemoteObjectObserver = &SPLRemoteObjectObserver;
 
-@interface SPLRemoteObject () <_SPLRemoteObjectConnectionDelegate, SPLNetServiceDelegate>
+@interface SPLRemoteObject () <_SPLRemoteObjectConnectionDelegate, NSNetServiceDelegate>
 
 @property (nonatomic, strong) _SPLRemoteObjectProxyBrowser *hostBrowser;
 
 @property (nonatomic, strong) NSMutableArray *activeConnection;
 @property (nonatomic, strong) NSMutableArray *queuedConnections;
 
-@property (nonatomic, strong) SPLNetService *netService;
+@property (nonatomic, strong) NSNetService *netService;
 @property (nonatomic, copy) NSDictionary *userInfo;
 
 @property (nonatomic, assign) SPLRemoteObjectReachabilityStatus reachabilityStatus;
@@ -157,7 +157,7 @@ static void * SPLRemoteObjectObserver = &SPLRemoteObjectObserver;
 
 #pragma mark - setters and getters
 
-- (void)setNetService:(SPLNetService *)netService
+- (void)setNetService:(NSNetService *)netService
 {
     if (netService != _netService) {
         _netService = netService;
@@ -196,7 +196,7 @@ static void * SPLRemoteObjectObserver = &SPLRemoteObjectObserver;
 
 #pragma mark - Initialization
 
-- (instancetype)initWithNetService:(SPLNetService *)netService type:(NSString *)type protocol:(Protocol *)protocol
+- (instancetype)initWithNetService:(NSNetService *)netService type:(NSString *)type protocol:(Protocol *)protocol
 {
     if (self = [super init]) {
         _netService = netService;
@@ -211,7 +211,7 @@ static void * SPLRemoteObjectObserver = &SPLRemoteObjectObserver;
 
         _netService.delegate = self;
         [_netService scheduleInRunLoop:[NSRunLoop mainRunLoop] forMode:NSRunLoopCommonModes];
-        [_netService resolveWithTimeout:self.timeoutInterval];
+        [_netService resolveWithTimeout:60.0];
     }
     return self;
 }
@@ -248,21 +248,21 @@ static void * SPLRemoteObjectObserver = &SPLRemoteObjectObserver;
     }
 }
 
-#pragma mark - SPLNetServiceDelegate
+#pragma mark - NSNetServiceDelegate
 
-- (void)netService:(SPLNetService *)sender didNotResolve:(NSDictionary *)errorDict
+- (void)netService:(NSNetService *)sender didNotResolve:(NSDictionary *)errorDict
 {
     NSLog(@"%@", errorDict);
     NSParameterAssert(errorDict);
 }
 
-- (void)netServiceDidResolveAddress:(SPLNetService *)sender
+- (void)netServiceDidResolveAddress:(NSNetService *)sender
 {
     self.reachabilityStatus = SPLRemoteObjectReachabilityStatusAvailable;
     [self.netService startMonitoring];
 }
 
-- (void)netService:(SPLNetService *)sender didUpdateTXTRecordData:(NSData *)data
+- (void)netService:(NSNetService *)sender didUpdateTXTRecordData:(NSData *)data
 {
     self.userInfo = [SPLRemoteObject userInfoFromTXTRecordData:data];
 }

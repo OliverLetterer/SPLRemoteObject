@@ -37,7 +37,6 @@
 #import "SPLRemoteObject.h"
 #import "_SPLIncompatibleResponse.h"
 #import <objc/runtime.h>
-#import <SPLNetService.h>
 
 
 
@@ -45,13 +44,13 @@ void SPLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBa
 
 
 
-@interface SPLRemoteObjectProxy () <SPLNetServiceDelegate, _SPLRemoteObjectConnectionDelegate>
+@interface SPLRemoteObjectProxy () <NSNetServiceDelegate, _SPLRemoteObjectConnectionDelegate>
 
 @property (nonatomic, copy) SPLRemoteObjectErrorBlock completionHandler;
 
 @property (nonatomic, assign) CFSocketRef socket; // retained
 @property (nonatomic, assign) uint16_t port;
-@property (nonatomic, strong) SPLNetService *netService;
+@property (nonatomic, strong) NSNetService *netService;
 
 @property (nonatomic, readonly) NSMutableArray *openConnections;
 
@@ -195,16 +194,16 @@ void SPLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBa
     [self _unpublishService];
 }
 
-#pragma mark - SPLNetServiceDelegate
+#pragma mark - NSNetServiceDelegate
 
-- (void)netServiceDidPublish:(SPLNetService *)sender
+- (void)netServiceDidPublish:(NSNetService *)sender
 {
     if (_completionHandler) {
         _completionHandler(nil), _completionHandler = nil;
     }
 }
 
-- (void)netService:(SPLNetService *)sender didNotPublish:(NSDictionary *)errorDict
+- (void)netService:(NSNetService *)sender didNotPublish:(NSDictionary *)errorDict
 {
     BOOL wasRunning = _isServerRunning && !_completionHandler;
 
@@ -394,7 +393,7 @@ void SPLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBa
 
 - (void)_publishService
 {
-    _netService = [[SPLNetService alloc] initWithDomain:@"" type:[self.type netServiceTypeWithProtocol:self.protocol] name:self.name port:_port];
+    _netService = [[NSNetService alloc] initWithDomain:@"" type:[self.type netServiceTypeWithProtocol:self.protocol] name:self.name port:_port];
     [_netService scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
     _netService.delegate = self;
     if (self.userInfo) {
