@@ -374,7 +374,7 @@ void SPLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBa
 
     NSData *socketAddressData = [NSData dataWithBytes:&socketAddress length:sizeof(socketAddress)];
 
-    CFSocketError error = CFSocketSetAddress(_socket, (__bridge CFDataRef)socketAddressData);
+    __assert_unused CFSocketError error = CFSocketSetAddress(_socket, (__bridge CFDataRef)socketAddressData);
     NSAssert(error == kCFSocketSuccess, @"error setting address to socket: %ld", error);
 
     NSData *socketAddressActualData = (__bridge_transfer NSData *)CFSocketCopyAddress(_socket);

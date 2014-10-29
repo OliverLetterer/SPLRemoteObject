@@ -1,0 +1,5 @@
+#include "Pods-Expecta.xcconfig"
+GCC_PREPROCESSOR_DEFINITIONS = $(inherited) COCOAPODS=1
+HEADER_SEARCH_PATHS = "${PODS_ROOT}/Headers/Build" "${PODS_ROOT}/Headers/Build/Expecta" "${PODS_ROOT}/Headers/Public" "${PODS_ROOT}/Headers/Public/CTOpenSSLWrapper" "${PODS_ROOT}/Headers/Public/Expecta" "${PODS_ROOT}/Headers/Public/OCMock" "${PODS_ROOT}/Headers/Public/OpenSSL-Universal" "${PODS_ROOT}/Headers/Public/OpenSSL-Universal/openssl" "${PODS_ROOT}/Headers/Public/SLObjectiveCRuntimeAdditions" "${PODS_ROOT}/Headers/Public/SPLRemoteObject"
+OTHER_LDFLAGS = ${PODS_EXPECTA_OTHER_LDFLAGS} -ObjC
+PODS_ROOT = ${SRCROOT}

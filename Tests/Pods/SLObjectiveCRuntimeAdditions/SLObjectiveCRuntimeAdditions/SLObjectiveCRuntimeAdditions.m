@@ -48,8 +48,8 @@
     NSParameterAssert(blockImplementation);
     NSParameterAssert(types);
 
-    SLBlockDescription *blockDescription = [[SLBlockDescription alloc] initWithBlock:blockImplementation];
-    NSMethodSignature *methodSignature = [NSMethodSignature signatureWithObjCTypes:types];
+    __assert_unused SLBlockDescription *blockDescription = [[SLBlockDescription alloc] initWithBlock:blockImplementation];
+    __assert_unused NSMethodSignature *methodSignature = [NSMethodSignature signatureWithObjCTypes:types];
 
     NSAssert([blockDescription blockSignatureIsCompatibleWithMethodSignature:methodSignature], @"block for %@ is not compatible", NSStringFromSelector(selector));
 
