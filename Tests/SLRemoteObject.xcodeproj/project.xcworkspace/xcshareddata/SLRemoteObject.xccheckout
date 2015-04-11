@@ -10,29 +10,29 @@
 	<string>SLRemoteObject</string>
 	<key>IDESourceControlProjectOriginsDictionary</key>
 	<dict>
-		<key>C92342CA-0BBD-424E-8198-1B7FF252995F</key>
-		<string>ssh://github.com/OliverLetterer/SLRemoteObject.git</string>
+		<key>C1FCE68D97FE4421E3679A8E9C117D6F650B5FD5</key>
+		<string>github.com:OliverLetterer/SLRemoteObject.git</string>
 	</dict>
 	<key>IDESourceControlProjectPath</key>
-	<string>Tests/SLRemoteObject.xcodeproj/project.xcworkspace</string>
+	<string>Tests/SLRemoteObject.xcodeproj</string>
 	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
 	<dict>
-		<key>C92342CA-0BBD-424E-8198-1B7FF252995F</key>
+		<key>C1FCE68D97FE4421E3679A8E9C117D6F650B5FD5</key>
 		<string>../../..</string>
 	</dict>
 	<key>IDESourceControlProjectURL</key>
-	<string>ssh://github.com/OliverLetterer/SLRemoteObject.git</string>
+	<string>github.com:OliverLetterer/SLRemoteObject.git</string>
 	<key>IDESourceControlProjectVersion</key>
-	<integer>110</integer>
+	<integer>111</integer>
 	<key>IDESourceControlProjectWCCIdentifier</key>
-	<string>C92342CA-0BBD-424E-8198-1B7FF252995F</string>
+	<string>C1FCE68D97FE4421E3679A8E9C117D6F650B5FD5</string>
 	<key>IDESourceControlProjectWCConfigurations</key>
 	<array>
 		<dict>
 			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
 			<string>public.vcs.git</string>
 			<key>IDESourceControlWCCIdentifierKey</key>
-			<string>C92342CA-0BBD-424E-8198-1B7FF252995F</string>
+			<string>C1FCE68D97FE4421E3679A8E9C117D6F650B5FD5</string>
 			<key>IDESourceControlWCCName</key>
 			<string>SLRemoteObject</string>
 		</dict>

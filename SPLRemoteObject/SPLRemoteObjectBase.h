@@ -28,7 +28,7 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-typedef void(^SPLRemoteObjectErrorBlock)(NSError *error);
+typedef void(^SPLRemoteObjectErrorBlock)(NSError *__nullable error);
 typedef NSData *__nonnull(^SPLRemoteObjectDataEncryptionBlock)(NSData *__nonnull rawData, NSData *__nonnull symmetricKey);
 typedef NSData *__nonnull(^SPLRemoteObjectDataDecryptionBlock)(NSData *__nonnull encryptedData, NSData *__nonnull symmetricKey);
 

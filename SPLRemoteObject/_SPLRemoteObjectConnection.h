@@ -46,8 +46,8 @@ NS_ASSUME_NONNULL_BEGIN
  */
 @interface _SPLRemoteObjectConnection : NSObject
 
-@property (nonatomic, strong) NSInputStream *inputStream;
-@property (nonatomic, strong) NSOutputStream *outputStream;
+@property (nonatomic, nullable) NSInputStream *inputStream;
+@property (nonatomic, nullable) NSOutputStream *outputStream;
 
 @property (nonatomic, readonly) BOOL isClientConnection;
 

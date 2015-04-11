@@ -46,7 +46,7 @@ void SPLRemoteObjectProxyServerAcceptCallback(CFSocketRef socket, CFSocketCallBa
 
 @interface SPLRemoteObjectProxy () <NSNetServiceDelegate, _SPLRemoteObjectConnectionDelegate>
 
-@property (nonatomic, copy) SPLRemoteObjectErrorBlock completionHandler;
+@property (nonatomic, copy, nullable) SPLRemoteObjectErrorBlock completionHandler;
 
 @property (nonatomic, assign) CFSocketRef socket; // retained
 @property (nonatomic, assign) uint16_t port;

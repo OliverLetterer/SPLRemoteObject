@@ -33,8 +33,8 @@
 
 @interface _SPLRemoteObjectProxyBrowser () <NSNetServiceBrowserDelegate, NSNetServiceDelegate>
 
-@property (nonatomic, strong) NSNetService *resolvedNetService;
-@property (nonatomic, strong) NSNetService *discoveringNetService;
+@property (nonatomic, nullable) NSNetService *resolvedNetService;
+@property (nonatomic, nullable) NSNetService *discoveringNetService;
 @property (nonatomic, strong) NSNetServiceBrowser *netServiceBrowser;
 
 @property (nonatomic, copy) NSDictionary *userInfo;

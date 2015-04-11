@@ -38,7 +38,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) NSString *name;
 @property (nonatomic, readonly) NSString *netServiceType;
 
-@property (nonatomic, readonly) NSNetService *resolvedNetService;
+@property (nonatomic, nullable, readonly) NSNetService *resolvedNetService;
 
 - (instancetype)initWithName:(NSString *)name netServiceType:(NSString *)netServiceType;
 
