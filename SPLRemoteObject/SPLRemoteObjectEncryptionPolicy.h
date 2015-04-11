@@ -6,6 +6,10 @@
 //  Copyright 2014 __MyCompanyName__. All rights reserved.
 //
 
+#import <Foundation/Foundation.h>
+
+NS_ASSUME_NONNULL_BEGIN
+
 /**
  @abstract  <#abstract comment#>
  */
@@ -15,3 +19,5 @@
 - (NSData *)dataByDescryptingData:(NSData *)data;
 
 @end
+
+NS_ASSUME_NONNULL_END

@@ -24,9 +24,17 @@
 //  THE SOFTWARE.
 //
 
+#import <Foundation/Foundation.h>
+
+NS_ASSUME_NONNULL_BEGIN
+
 @interface NSInvocation (SPLRemoteObject)
 
-+ (NSInvocation *)invocationWithRemoteObjectDictionaryRepresentation:(NSDictionary *)dictionaryRepresentation forProtocol:(Protocol *)protocol;
++ (nullable NSInvocation *)invocationWithRemoteObjectDictionaryRepresentation:(NSDictionary *)dictionaryRepresentation forProtocol:(Protocol *)protocol;
 - (NSDictionary *)remoteObjectDictionaryRepresentationForProtocol:(Protocol *)protocol;
 
 @end
+
+NS_ASSUME_NONNULL_END
+
+

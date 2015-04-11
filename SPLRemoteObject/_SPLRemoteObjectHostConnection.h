@@ -26,7 +26,7 @@
 
 #import "_SPLRemoteObjectConnection.h"
 
-
+NS_ASSUME_NONNULL_BEGIN
 
 /**
  @abstract  <#abstract comment#>
@@ -35,8 +35,10 @@
 
 @property (nonatomic, readonly) NSString *host;
 @property (nonatomic, readonly) NSInteger port;
-@property (nonatomic, copy) id completionBlock;
+@property (nonatomic, nullable, copy) id completionBlock;
 
-- (id)initWithHostAddress:(NSString *)host port:(NSInteger)port;
+- (instancetype)initWithHostAddress:(NSString *)host port:(NSInteger)port;
 
 @end
+
+NS_ASSUME_NONNULL_END

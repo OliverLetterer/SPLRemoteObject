@@ -24,7 +24,11 @@
 //  THE SOFTWARE.
 //
 
+#import <Foundation/Foundation.h>
+
 @class _SPLRemoteObjectConnection;
+
+NS_ASSUME_NONNULL_BEGIN
 
 @protocol _SPLRemoteObjectConnectionDelegate <NSObject>
 
@@ -57,3 +61,5 @@
 - (void)sendDataPackage:(NSData *)dataPackage;
 
 @end
+
+NS_ASSUME_NONNULL_END

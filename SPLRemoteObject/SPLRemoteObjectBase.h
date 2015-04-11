@@ -24,9 +24,13 @@
 //  THE SOFTWARE.
 //
 
+#import <Foundation/Foundation.h>
+
+NS_ASSUME_NONNULL_BEGIN
+
 typedef void(^SPLRemoteObjectErrorBlock)(NSError *error);
-typedef NSData *(^SPLRemoteObjectDataEncryptionBlock)(NSData *rawData, NSData *symmetricKey);
-typedef NSData *(^SPLRemoteObjectDataDecryptionBlock)(NSData *encryptedData, NSData *symmetricKey);
+typedef NSData *__nonnull(^SPLRemoteObjectDataEncryptionBlock)(NSData *__nonnull rawData, NSData *__nonnull symmetricKey);
+typedef NSData *__nonnull(^SPLRemoteObjectDataDecryptionBlock)(NSData *__nonnull encryptedData, NSData *__nonnull symmetricKey);
 
 
 
@@ -58,3 +62,5 @@ typedef enum {
     SPLRemoteObjectConnectionTimedOut = 1001,
     SPLRemoteObjectConnectionIncompatibleProtocol = 1002
 } SPLRemoteObjectErrorCode;
+
+NS_ASSUME_NONNULL_END

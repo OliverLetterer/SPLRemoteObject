@@ -27,14 +27,14 @@
 #import "SPLRemoteObjectBase.h"
 #import "SPLRemoteObjectEncryptionPolicy.h"
 
-
+NS_ASSUME_NONNULL_BEGIN
 
 /**
  @abstract  <#abstract comment#>
  */
 @interface SPLRemoteObject : NSObject
 
-+ (NSDictionary *)userInfoFromTXTRecordData:(NSData *)txtData;
++ (NSDictionary *)userInfoFromTXTRecordData:(nullable NSData *)txtData;
 @property (nonatomic, copy, readonly) NSDictionary *userInfo;
 
 @property (nonatomic, readonly) NSString *name;
@@ -42,10 +42,12 @@
 @property (nonatomic, readonly) Protocol *protocol;
 
 @property (nonatomic, assign) NSTimeInterval timeoutInterval;
-@property (strong) id<SPLRemoteObjectEncryptionPolicy> encryptionPolicy;
+@property (nullable) id<SPLRemoteObjectEncryptionPolicy> encryptionPolicy;
 @property (nonatomic, readonly) SPLRemoteObjectReachabilityStatus reachabilityStatus;
 
 - (instancetype)init UNAVAILABLE_ATTRIBUTE;
 - (instancetype)initWithName:(NSString *)name type:(NSString *)type protocol:(Protocol *)protocol;
 
 @end
+
+NS_ASSUME_NONNULL_END

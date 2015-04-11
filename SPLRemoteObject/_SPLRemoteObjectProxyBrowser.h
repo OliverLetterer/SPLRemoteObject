@@ -26,7 +26,7 @@
 
 @class _SPLRemoteObjectProxyBrowser;
 
-
+NS_ASSUME_NONNULL_BEGIN
 
 /**
  @abstract  <#abstract comment#>
@@ -48,3 +48,5 @@
 - (void)stopDiscoveringRemoteObjectHosts;
 
 @end
+
+NS_ASSUME_NONNULL_END

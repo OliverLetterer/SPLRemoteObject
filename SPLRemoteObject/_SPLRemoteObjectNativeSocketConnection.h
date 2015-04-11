@@ -26,7 +26,7 @@
 
 #import "_SPLRemoteObjectConnection.h"
 
-
+NS_ASSUME_NONNULL_BEGIN
 
 /**
  @abstract  <#abstract comment#>
@@ -35,6 +35,8 @@
 
 @property (nonatomic, readonly) CFSocketNativeHandle nativeSocketHandle;
 
-- (id)initWithNativeSocketHandle:(CFSocketNativeHandle)nativeSocketHandle;
+- (instancetype)initWithNativeSocketHandle:(CFSocketNativeHandle)nativeSocketHandle;
 
 @end
+
+NS_ASSUME_NONNULL_END

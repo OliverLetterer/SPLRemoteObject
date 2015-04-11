@@ -24,11 +24,13 @@
 //  THE SOFTWARE.
 //
 
+#import <Foundation/Foundation.h>
 #import <Security/Security.h>
+
 #import "SPLRemoteObjectBase.h"
 #import "SPLRemoteObjectEncryptionPolicy.h"
 
-
+NS_ASSUME_NONNULL_BEGIN
 
 /**
  @abstract  <#abstract comment#>
@@ -41,11 +43,13 @@
 @property (nonatomic, weak) id target;
 @property (nonatomic, readonly) Protocol *protocol;
 
-@property (strong) id<SPLRemoteObjectEncryptionPolicy> encryptionPolicy;
+@property (nullable) id<SPLRemoteObjectEncryptionPolicy> encryptionPolicy;
 
-@property (nonatomic, copy) NSDictionary *userInfo;
+@property (nonatomic, nullable, copy) NSDictionary *userInfo;
 
 - (instancetype)init UNAVAILABLE_ATTRIBUTE;
 - (instancetype)initWithName:(NSString *)name type:(NSString *)type protocol:(Protocol *)protocol target:(id)target completionHandler:(SPLRemoteObjectErrorBlock)completionHandler;
 
 @end
+
+NS_ASSUME_NONNULL_END
