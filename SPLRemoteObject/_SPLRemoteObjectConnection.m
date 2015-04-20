@@ -115,6 +115,13 @@ static BOOL streamIsHealthyAndOpen(NSStream *stream)
     _isConnected = YES;
 
     [[NSNotificationCenter defaultCenter] postNotificationName:SPLRemoteObjectNetworkOperationDidStartNotification object:nil];
+
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(10.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        if (self.isConnected) {
+            [self disconnect];
+            [self.delegate remoteObjectConnectionConnectionAttemptFailed:self];
+        }
+    });
 }
 
 - (void)disconnect
